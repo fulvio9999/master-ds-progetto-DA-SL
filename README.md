@@ -4,11 +4,12 @@
 
 ### 1. Introduzione
 
-dire che ci saraà una parte di clustering:
+Clustering:
+
 Specificare che si procederà nell'applicare i seguenti algoritmi di clstering: gerarchico agglomerativo, kmeans, kmedoids, mixture of gaussian.
 Ognuna di queste si proverà con: tutte le variabili del dataset, soltante diagonal e bottom, soltanto 2 dalla PCA.
 
-Un'altra parte di regression.
+Regression.
 
 ### 2. Descrizione del Dataset e Analisi Esplorativa
 
