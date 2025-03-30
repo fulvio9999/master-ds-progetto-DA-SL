@@ -3,6 +3,7 @@
 ## TODO list:
 
 1. Introduzione
+
 dire che ci saraà una parte di clustering:
 Specificare che si procederà nell'applicare i seguenti algoritmi di clstering: gerarchico agglomerativo, kmeans, kmedoids, mixture of gaussian.
 Ognuna di queste si proverà con: tutte le variabili del dataset, soltante diagonal e bottom, soltanto 2 dalla PCA.
