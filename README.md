@@ -71,7 +71,7 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo P
 
 For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo PCA"]:
 
-- [ ] Eseguire l'algoritmo
+- [ ] Eseguire l'algoritmo con Mclust (internamente cerca la versione parsimoniosa)
 - [ ] Determinare K: (Stesse tecniche?)
 - [ ] Goodness dei risultati (Stesse tecniche?)
 - [ ] Commentare i risultati
@@ -80,7 +80,7 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo P
 
 - [ ] Commento di comparazione tra le diverse tecniche e tra il diverso numero di variabili usate.
 - [ ] Confronto grafico 2D (usare PCA per il caso di tutte le variabili)
-- [ ] Commento interpretativo dei risultati
+- [ ] Commento interpretativo dei risultati, vedere le caratteristiche dei diversi cluster trovati (es statistiche descrittive ecc)
 
 ### 4. Applicazione delle tecniche di mixture of regression
 
