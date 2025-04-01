@@ -154,16 +154,9 @@ Confronta le distribuzioni tra le variabili per capire se alcune variabili hanno
 Per avere una prima idea delle relazioni tra le variabili, creiamo una matrice di scatterplot. Utilizziamo la colonna 'Status' per colorare i punti.
 
 ```{r scatterplot}
-pairs(banknote, col = banknote$Status, main = "Scatterplot Matrix del Dataset Banknote")
-# library(GGally)
-# library(dplyr)
-
-# ggpairs(banknote, aes(color = as.factor(Status)))
-
-# ggpairs(
-#   banknote,
-#   aes(color = as.factor(Status))
-# ) + theme(plot.margin = margin(0, 0, 0, 0))
+library(GGally)
+ggpairs(banknote[,-1],upper = list(continuous = "density", combo = "box_no_facet"),
+        lower = list(continuous = "points", combo = "dot_no_facet"),aes(colour=banknote$Status))
 ```
 
 TODO: Commento:
@@ -263,7 +256,17 @@ ggplot(scree_plot, aes(x = PC, y = Eigenvalue)) +
     theme_minimal()
 ```
 
-Nel grafico il gomito sembra collocarsi intorno alla quarta componente. I tre criteri danno perciò risultati differenti, per mantenere un equilibrio tra interpretabilità e preservazione della varianza, si potrebbe optare per 3 componenti.
+Nel grafico il gomito sembra collocarsi intorno alla quarta componente. I tre criteri danno perciò risultati differenti, per mantenere un equilibrio tra interpretabilità e preservazione della varianza, si potrebbe optare per 3 componenti.  
+Di seguito viene costruito il nuovo dataset in cui le variabili sono sostituite con le prime 3 PCA, che verrà usato più avanti nelle analisi.
+
+```{r}
+pca_data <- as.data.frame(pca_result$ind$coord[, 1:3])
+colnames(pca_data) <- c("PCA1", "PCA2", "PCA3")
+banknote_pca <- cbind(pca_data, Status = banknote$Status)
+banknote_pca <- banknote_pca %>% dplyr::select(Status, everything())
+head(banknote_pca)
+```
+
 
 Per comprendere meglio il contributo delle variabili alle componenti principali, visualizziamo le loro coordinate e realizziamo una mappa di correlazione. Questo ci aiuta a capire come le variabili si relazionano alle componenti principali.
 ```{r}
@@ -523,10 +526,7 @@ Adesso, procederemo ad utilizzare solamente le variabili estratte tramite la tec
 
 
 ```{r}
-library(mclust)
-data(banknote)
-#dati <- banknote[, c("Bottom", "Diagonal")]
-#PCA
+dati <- banknote_pca[, -1]
 dati_scaled <- scale(dati)
 gmm_result <- Mclust(dati_scaled)
 summary(gmm_result)
@@ -535,14 +535,129 @@ plot(gmm_result, what = "classification")
 plot(gmm_result, what = "uncertainty")
 plot(gmm_result, what = "density")
 ```
+In questo caso si nota che il valore di BIC è più alto (migliore) rispetto al caso in cui sono state usate tutte le variabili ma è più basso del caso in cui sono state usate solamente le due variabili selezionate. Questa volta l'algoritmo suggerisce un numero ottimale di cluster pari a 2, selezionando come modello parsimonioso il modello EEV (ellissoidale, con volume e orientamento uguale).  
+Verifichiamo ora se i valori di ICL sono in accordo con quelli del BIC confrontando esplicitamente le soluzioni per 2 e 3 cluster:  
+
+```{r}
+gmm_result2 <- Mclust(dati_scaled, G=2)
+summary(gmm_result2)
+gmm_result3 <- Mclust(dati_scaled, G=3)
+summary(gmm_result3)
+```
+
+Anche in questo caso, i valori di BIC e ICL sono concordi: per un numero di cluster pari a 3 si ottiene un BIC di circa -1630 e un ICL di -1657, mentre per 2 cluster il BIC risulta attorno a -1614 e l'ICL a -1616. Questo dimostra che anche l'ICL suggerisce che il modello ottimale è quello con 2 cluster.  
 
 
+## 3.1.5. Validazione e visualizzazione dei risultati
+
+TODO: inserire commento introduttivo
+
+### 3.1.5.3. Validazione con la classe reale
+
+In questa sezione, esamineremo i diversi metodi di cluster utilizzati sul dataset 'banknote' fissando il numero di cluster pari al numero di classi reali, ossia pari a 2. In questo modo faremo uso di tecniche di validazione esterne perchè abbiamo a disposizione la reale classe delle osservazioni (variabile 'Status').  
+Si farà uso di misure quali: adjusted Rand Index, Meila variation index e tutte le misure che hanno a che fare con il learning di classificazione (accuratezza, Specifity, Recall, Confusion Matrix, AUC, ecc.).  
+Inizialmente tale misure verranno calcolate sull'intero dataset in cui sono stati eseguiti gli algoritmi per il calcolo dei cluster; successivamente sarà diviso il dataset in training e testing, nel primo saranno trovati i cluster con i diversi algoritmi e nel secondo saranno valutate le performance con tali misure, per evidenziare come si comportano questi ultimi per quanto riguarda la predizione di nuovi dati.
+
+In questa sezione analizzeremo la qualità dei diversi metodi di clustering applicati al dataset banknote, fissando il numero di cluster pari al numero di classi reali, ovvero 2. Questo approccio ci permette di utilizzare tecniche di validazione esterne, dato che disponiamo delle etichette reali delle osservazioni (variabile 'Status').  
+Per valutare l'efficacia dei cluster identificati, utilizzeremo diverse metriche, tra cui:  
+- Adjusted Rand Index (ARI) e Meila Variation Index, che misurano il grado di concordanza tra il clustering ottenuto e la classificazione reale.
+- Metriche di valutazione proprie del machine learning supervisionato, come accuratezza, specificità, recall, matrice di confusione e AUC, per interpretare il clustering come un problema di classificazione binaria.  
+
+L'analisi verrà condotta in due fasi:  
+1. Valutazione sull'intero dataset, per confrontare le prestazioni dei vari algoritmi di clustering utilizzando l'intera popolazione di dati.
+2. Validazione su dati di test, dove il dataset verrà suddiviso in un set di training e un set di test. I cluster verranno individuati nel training set con i diversi algoritmi e poi utilizzati per classificare le osservazioni nel test set. Questo permetterà di valutare la capacità predittiva dei modelli nel riconoscere nuove osservazioni e analizzare la loro generalizzazione su dati non visti.
 
 
 ```{r}
-library(GGally)
-ggpairs(banknote[,-1],upper = list(continuous = "density", combo = "box_no_facet"),
-        lower = list(continuous = "points", combo = "dot_no_facet"),aes(colour=banknote$Status))
+# Learning
+
+N=nrow(banknote)
+totIndex=seq(from=1,to=N,by=1)
+length(totIndex)
+gamma=0.7
+trainIndex=sample(totIndex,gamma*N, replace=F )
+banknote_L<-banknote[trainIndex,]
+nL=nrow(banknote_L)
+banknote_T<-banknote[-trainIndex,]
+nT=nrow(banknote_T)
+nL
+nT
+table(banknote$Status)
+table(banknote_L$Status)
+table(banknote_T$Status)
+#
+table(banknote$Status)/N*100
+table(banknote_L$Status)/nL*100
+table(banknote_T$Status)/nT*100
+
+
+#
+# what is the problem?
+#
+#install.packages("caret")
+library(caret) # CreateDataPartition is in the library "caret"
+# http://topepo.github.io/caret/data-splitting.html
+#
+#
+# Training, Validation and Test sets
+#
+gamma_L= 0.7 # proportion of units in the training set
+set.seed(1500)
+trainIndex <- createDataPartition(banknote$Status, p = gamma_L, 
+                                  list = FALSE, 
+                                  times = 1)
+banknote_L<-banknote[trainIndex,]
+nL<-nrow(banknote_L)
+nL
+table(banknote_L$Status)
+table(banknote_L$Status)/nL*100
+
+banknote_T<-banknote[-trainIndex,]
+nT<-nrow(banknote_T)
+nT
+table(banknote_T$Status)
+table(banknote_T$Status)/nT*100 
+
+
+set.seed(10000)
+bankmixt2_L<-mvnormalmixEM(banknote_L[,c(6,7)], k = 2)
+summary(bankmixt2_L)
+plot(bankmixt2_L, density = TRUE,  cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5)
+
+bankmixt2_L$class<-apply(bankmixt2_L$posterior,1,which.max)
+
+table(banknote_L$Status, bankmixt2_L$class)
+
+
+alpha=bankmixt2_L$lambda
+mu1=bankmixt2_L$mu[[1]]
+mu2=bankmixt2_L$mu[[2]]
+Sigma1=bankmixt2_L$sigma[[1]]
+Sigma2=bankmixt2_L$sigma[[2]]
+alpha
+mu1
+Sigma1
+mu2
+Sigma2
+
+library(mvtnorm)
+mu=rbind(mu1,mu2)
+mu
+p=2
+G=2
+Sigma=array(0, dim=c(p,p, G))
+Sigma[,,1]=Sigma1
+Sigma[,,2]=Sigma2
+Sigma
+
+stat_T_mixt=matrix(0,nT,1+2*G+1)
+source("mixt2_pg.r")
+for (i in 1:nT) {
+  x=banknote_T[i,c(6:7)]
+  stat_T_mixt[i,]=mixt2_pg(x,alpha,mu, Sigma,G)
+}
+table(stat_T_mixt[,6],banknote_T$Status)
 ```
+
 
 
