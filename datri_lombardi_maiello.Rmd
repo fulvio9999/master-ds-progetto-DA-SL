@@ -312,3 +312,90 @@ fviz_cluster(pam.res,
 )
 ```
 
+
+## 3.1.4 Misture di Gaussiane
+
+In questa sezione introduciamo l'applicazione del clustering basato su misture di gaussiane, utilizzando la funzione `Mclust` del pacchetto **mclust**. Questo approccio assume che i dati siano generati da una combinazione di distribuzioni gaussiane e, tramite l'algoritmo EM (Expectation-Maximization), stima i parametri di ciascuna componente. Il vantaggio principale di questo metodo è la capacità di modellare cluster con forme ellissoidali, permettendo di gestire anche cluster con sovrapposizioni. Inoltre, `Mclust` effettua una selezione automatica del numero ottimale di cluster e del modello di covarianza (parsimonioso) in base al criterio BIC, fornendo un'indicazione della bontà dell'adattamento e della complessità del modello.  
+
+
+```{r}
+library(mclust)
+data(banknote)
+dati <- banknote[, -1]
+dati_scaled <- scale(dati)
+gmm_result <- Mclust(dati_scaled)
+summary(gmm_result)
+plot(gmm_result, what = "BIC")
+plot(gmm_result, what = "classification")
+plot(gmm_result, what = "uncertainty")
+plot(gmm_result, what = "density")
+```
+Nonostante sappiamo che il dataset banknote presenta due classi reali (ad esempio, banconote fraudolente e non fraudolente), l'analisi con Mclust ha individuato come miglior modello un numero di cluster pari a 3. Inoltre, il modello selezionato è di tipo VEE (ovvero ellissoidale, con forma variabile, ma con volume ed orientamento uguali), in base al valore più alto di BIC evidenziato nel plot. È interessante notare come il BIC per 2 cluster risulti significativamente inferiore rispetto a quello per un numero maggiore di cluster, probabilmente perché sono state utilizzate tutte le variabili del dataset per costruire i cluster.  
+Confrontiamo esplicitamente i valori di BIC e ICL per soluzioni con 2 e 3 cluster:  
+
+```{r}
+library(mclust)
+data(banknote)
+dati <- banknote[, -1]
+dati_scaled <- scale(dati)
+gmm_result2 <- Mclust(dati_scaled, G=2)
+summary(gmm_result2)
+gmm_result3 <- Mclust(dati_scaled, G=3)
+summary(gmm_result3)
+```
+Dai sommari ottenuti si osserva che entrambi i modelli, per k = 2 e k = 3, forniscono valori che suggeriscono una soluzione migliore per 3 cluster. I valori del BIC e, conseguentemente, anche quelli dell'ICL (che include una penalizzazione per l'incertezza nelle assegnazioni), indicano che la soluzione a 3 cluster è preferibile rispetto a quella a 2 cluster.  
+Valutiamo l'effetto della scelta delle variabili sul modello. Utilizziamo invece solo le due variabili "Bottom" e "Diagonal", individuate in precedenza dagli scatterplot come le più discriminanti:  
+
+```{r}
+library(mclust)
+data(banknote)
+dati <- banknote[, c("Bottom", "Diagonal")]
+dati_scaled <- scale(dati)
+gmm_result <- Mclust(dati_scaled)
+summary(gmm_result)
+plot(gmm_result, what = "BIC")
+plot(gmm_result, what = "classification")
+plot(gmm_result, what = "uncertainty")
+plot(gmm_result, what = "density")
+```
+Anche in questo caso si nota che il valore di BIC è notevolmente più alto (migliore) rispetto al caso in cui sono state usate tutte le variabili. L'algoritmo suggerisce ancora un numero ottimale di cluster pari a 3, ma questa volta ha selezionato come modello parsimonioso il modello EVE (ellissoidale, con volume uguale e orientamento variabile). È importante osservare che in uno dei cluster sono presenti solamente 16 osservazioni, il che potrebbe indicare un gruppo di dati che, probabilmente, sono state erroneamente assegnate a un cluster separato.  
+Verifichiamo ora se i valori di ICL sono in accordo con quelli del BIC confrontando esplicitamente le soluzioni per 2 e 3 cluster:  
+
+```{r}
+library(mclust)
+data(banknote)
+dati <- banknote[, c("Bottom", "Diagonal")]
+dati_scaled <- scale(dati)
+gmm_result2 <- Mclust(dati_scaled, G=2)
+summary(gmm_result2)
+gmm_result3 <- Mclust(dati_scaled, G=3)
+summary(gmm_result3)
+```
+In questo caso, i valori di BIC e ICL sono concordi: per un numero di cluster pari a 3 si ottiene un BIC di circa -845 e un ICL di -849, mentre per 2 cluster il BIC risulta attorno a -888 e l'ICL a -890. Questo dimostra che anche l'ICL, che penalizza ulteriormente le assegnazioni incerte, suggerisce che il modello ottimale è quello con 3 cluster.  
+Adesso, procederemo ad utilizzare solamente le variabili estratte tramite la tecnica PCA.  
+
+
+```{r}
+library(mclust)
+data(banknote)
+#dati <- banknote[, c("Bottom", "Diagonal")]
+#PCA
+dati_scaled <- scale(dati)
+gmm_result <- Mclust(dati_scaled)
+summary(gmm_result)
+plot(gmm_result, what = "BIC")
+plot(gmm_result, what = "classification")
+plot(gmm_result, what = "uncertainty")
+plot(gmm_result, what = "density")
+```
+
+
+
+
+```{r}
+library(GGally)
+ggpairs(banknote[,-1],upper = list(continuous = "density", combo = "box_no_facet"),
+        lower = list(continuous = "points", combo = "dot_no_facet"),aes(colour=banknote$Status))
+```
+
+
