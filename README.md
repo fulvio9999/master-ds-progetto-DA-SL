@@ -72,7 +72,7 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibili dopo 
 - [x] Eseguire l'algoritmo con Mclust (internamente cerca la versione parsimoniosa)
 - [x] Determinare K: usare BIC e ICL
 - [x] Commentare i risultati
-- [ ] Fare il tutto usando solo le variabili dopo PCA
+- [x] Fare il tutto usando solo le variabili dopo PCA
 
 #### 3.3. Validazione e Visualizzazione dei Risultati
 
