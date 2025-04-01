@@ -14,59 +14,29 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduzione
+# 1. Introduzione
 
 ## Obiettivo del Progetto
 
-Il presente progetto si propone di applicare diverse tecniche di
-clustering al dataset **banknote** al fine di identificare gruppi
-omogenei presenti nei dati e confrontare l'efficacia dei vari metodi.
-L'analisi intende mettere in pratica le metodologie apprese nel modulo
-di Data Science, offrendo una panoramica completa e comparativa delle
-tecniche di clustering.
+Il presente progetto si propone di applicare diverse tecniche di clustering al dataset **banknote** al fine di identificare gruppi omogenei presenti nei dati e confrontare l'efficacia dei vari metodi. L'analisi intende mettere in pratica le metodologie apprese nel modulo di *Data Analysis & Statistical Learning*, in particolare, verranno trattati i seguenti algoritmi di clustering: **Clustering Gerarchico Agglomerativo**, **Clustering Partizionale (K-means e K-medoids)** e **Clustering Model-based (Mixture of Gaussian)**.
 
-## Contesto e Motivazione
+TODO: specificare PCA e mixture of regression
 
-Questo lavoro rientra in un modulo dedicato al clustering, che ha
-trattato argomenti quali: - **Clustering Gerarchico Agglomerativo** -
-**Clustering Partizionale (K-means e K-medoids)** - **Clustering
-Model-based (Mixture of Gaussian, modelli parsimoniosi e mixture of
-regressions)** - **Validazione del Clustering**
-
-Il dataset **banknote** rappresenta un caso di studio interessante per
-valutare come ciascun approccio possa evidenziare strutture nascoste nei
-dati e per esaminare criticamente i risultati ottenuti.
-
-## Struttura del Documento
+Tra diversi dataset consigliati dai docenti, è stato scelto il dataset **banknote**, per un motivo puramente professionale, essendo tutti i membri del team legati professionalmente alle banconote.  
+TODO: togliere?  
 
 Il documento è organizzato nei seguenti capitoli:
 
-1.  **Introduzione**: Presentazione del progetto, degli obiettivi e del
-    contesto.
-2.  **Descrizione del Dataset e Analisi Esplorativa**: Esplorazione
-    preliminare dei dati, analisi descrittiva e operazioni di
-    preprocessing.
-3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei
-    metodi di clustering (gerarchico, partizionale e model-based).
-4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei
-    risultati mediante metriche di validazione e visualizzazione dei
-    cluster (con l'ausilio della PCA).
-5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e
-    prospettive per ulteriori analisi.
-6.  **Appendici**: Codice completo, grafici supplementari e riferimenti
-    bibliografici.
+1.  **Introduzione**: Presentazione del progetto, degli obiettivi e del contesto.  
+2.  **Descrizione del Dataset e Analisi Esplorativa**: Esplorazione preliminare dei dati, analisi descrittiva e operazioni di preprocessing.  
+3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei metodi di clustering (gerarchico, partizionale e model-based).  
+4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).  
+5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.  
 
-In questo documento verranno inclusi i blocchi di codice R, commentati e
-spiegati dettagliatamente, per permettere una replicazione completa
-dell'analisi e una comprensione approfondita delle tecniche applicate.
 
-# Descrizione del Dataset e Analisi Esplorativa
+# 2. Descrizione del Dataset e Analisi Esplorativa
 
-In questa sezione esamineremo il dataset **banknote** per comprenderne
-la struttura, le caratteristiche e le relazioni tra le variabili. Il
-dataset proviene dal pacchetto `mclust` e contiene misure che possono
-essere utilizzate per distinguere tra banconote autentiche e false (o
-per altri scopi diagnostici).
+In questa sezione esamineremo il dataset **banknote** per comprenderne la struttura, le caratteristiche e le relazioni tra le variabili. Il dataset proviene dal pacchetto `mclust` e contiene misure che possono essere utilizzate per distinguere tra banconote autentiche e false (o per altri scopi diagnostici).
 
 ## Caricamento del Dataset
 
@@ -182,16 +152,12 @@ orientare le successive fasi di clustering e per capire eventuali
 necessità di preprocessing (ad es. scaling o trasformazioni) prima
 dell'applicazione dei metodi di clustering.
 
+# 3. Applicazione delle Tecniche di Clustering
+
 ## 3.1 Clustering Gerarchico Agglomerativo
 
-Il **Clustering Gerarchico Agglomerativo (HAC)** è una tecnica di
-clustering che costruisce una gerarchia di cluster attraverso un
-approccio "bottom-up". Inizia considerando ogni punto dati come un
-cluster separato e, successivamente, unisce iterativamente i cluster più
-simili fino a formare un unico cluster che racchiude tutti i dati.
-Questo metodo non richiede la specifica del numero di cluster a priori e
-produce una rappresentazione ad albero, nota come **dendrogramma**, che
-facilita la visualizzazione delle relazioni tra i cluster.
+Il **Clustering Gerarchico Agglomerativo (HAC)** è una tecnica di clustering che costruisce una gerarchia di cluster attraverso un approccio "bottom-up". Inizia considerando ogni punto dati come un cluster separato e, successivamente, unisce iterativamente i cluster più
+simili fino a formare un unico cluster che racchiude tutti i dati. Questo metodo non richiede la specifica del numero di cluster a priori e produce una rappresentazione ad albero, nota come **dendrogramma**, che facilita la visualizzazione delle relazioni tra i cluster.
 
 ### Implementazione in R
 
@@ -225,12 +191,8 @@ plot(clustering_hierarchico, main = "Dendrogramma del Clustering Gerarchico Aggl
 
 ### Interpretazione del Dendrogramma
 
-Il dendrogramma risultante mostra come i punti dati vengono uniti in
-cluster successivamente. L'altezza dei rami indica la distanza a cui
-avviene la fusione: rami più bassi corrispondono a fusioni tra punti o
-cluster molto simili. Analizzando il dendrogramma, possiamo decidere il
-numero di cluster tagliando l'albero a un'altezza che separa i gruppi in
-modo significativo. Vantaggi e Svantaggi del Clustering Gerarchico
+Il dendrogramma risultante mostra come i punti dati vengono uniti in cluster successivamente. L'altezza dei rami indica la distanza a cui avviene la fusione: rami più bassi corrispondono a fusioni tra punti o cluster molto simili. Analizzando il dendrogramma, possiamo decidere il
+numero di cluster tagliando l'albero a un'altezza che separa i gruppi in modo significativo. Vantaggi e Svantaggi del Clustering Gerarchico
 
 #### Vantaggi:
 
