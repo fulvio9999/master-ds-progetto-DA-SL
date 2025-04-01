@@ -28,9 +28,7 @@ Regression.
 
 ### 3. Clustering
 
-#### 3.1. Applicazione delle Tecniche di Clustering non model-based
-
-##### 3.1.1. Clustering Gerarchico Agglomerativo
+#### 3.1. Clustering Gerarchico Agglomerativo
 
 For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo PCA"]:
 
@@ -43,7 +41,7 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo P
     * Intenal: silhouette width, Dunn index
 - [ ] Commentare i risultati
 
-##### 3.1.2. Clustering Partizionale: K-means e K-medoids (PAM)
+#### 3.2. Clustering Partizionale: K-means e K-medoids (PAM)
 
 For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo PCA"]:
 
@@ -56,16 +54,14 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo P
     * Intenal: silhouette width, Dunn index
 - [ ] Commentare i risultati
 
-##### 3.1.3. Confronto tra clustering non Model-based
+##### 3.3. Confronto tra clustering non Model-based
 
 For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo PCA"]:
 
 - [ ] Calcolo clValid
 - [ ] Commento risultati ottenuti con clValid
 
-#### 3.2. Applicazione delle Tecniche di Clustering model-based
-
-##### 3.2.1. Clustering mixture of gaussian
+#### 3.4. Clustering model-based: mixture of gaussian
 
 For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibili dopo PCA"]:
 
@@ -74,12 +70,16 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibili dopo 
 - [x] Commentare i risultati
 - [x] Fare il tutto usando solo le variabili dopo PCA
 
-#### 3.3. Validazione e Visualizzazione dei Risultati
+#### 3.5. Validazione e Visualizzazione dei Risultati
 
 - [ ] Commento di comparazione tra le diverse tecniche e tra il diverso numero di variabili usate.
 - [ ] Confronto grafico 2D (usare PCA per il caso di tutte le variabili)
 - [ ] Commento interpretativo dei risultati, vedere le caratteristiche dei diversi cluster trovati (es statistiche descrittive ecc)
-- [ ] External: adjusted rand index, meila variation index, Accuracy, Confusion matrix, ecc. Fare prima sul tutto il dataset e poi dividere il dataset e fare solo su test set.
+- [ ] External: adjusted rand index, meila variation index, Accuracy, Confusion matrix, ecc. Fare prima sul tutto il dataset e poi dividere il dataset e fare solo su test set:
+      - Per l'intero dataset e per il train/test:
+         - Per ogni tecnica di clustering
+            - Per ogni ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibili dopo PCA"]:
+               Calcolare ciascuna di queste misure: [Adjusted Rand index, Meila, Accuracy, Recall, Specifity, Confusion Matrix, AUC]
 
 ### 4. Applicazione delle tecniche di mixture of regression
 
