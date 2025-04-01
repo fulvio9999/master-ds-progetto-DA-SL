@@ -41,7 +41,6 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo P
     * NbClust --> Calcola su diversi indici Tra cui quelli sopra
 - [ ] Goodness dei risultati (cluster.stats() calcola diversi indici)
     * Intenal: silhouette width, Dunn index
-    * External (solo se si ha la vera classe): adjusted rand index, meila variation index
 - [ ] Commentare i risultati
 
 ##### 3.1.2. Clustering Partizionale: K-means e K-medoids (PAM)
@@ -55,7 +54,6 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo P
     * NbClust --> Calcola su diversi indici Tra cui quelli sopra
 - [ ] Goodness dei risultati (cluster.stats() calcola diversi indici)
     * Intenal: silhouette width, Dunn index
-    * External (solo se si ha la vera classe): adjusted rand index, meila variation index
 - [ ] Commentare i risultati
 
 ##### 3.1.3. Confronto tra clustering non Model-based
@@ -69,18 +67,19 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo P
 
 ##### 3.2.1. Clustering mixture of gaussian
 
-For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo PCA"]:
+For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibili dopo PCA"]:
 
-- [ ] Eseguire l'algoritmo con Mclust (internamente cerca la versione parsimoniosa)
-- [ ] Determinare K: (Stesse tecniche?)
-- [ ] Goodness dei risultati (Stesse tecniche?)
-- [ ] Commentare i risultati
+- [x] Eseguire l'algoritmo con Mclust (internamente cerca la versione parsimoniosa)
+- [x] Determinare K: usare BIC e ICL
+- [x] Commentare i risultati
+- [ ] Fare il tutto usando solo le variabili dopo PCA
 
 #### 3.3. Validazione e Visualizzazione dei Risultati
 
 - [ ] Commento di comparazione tra le diverse tecniche e tra il diverso numero di variabili usate.
 - [ ] Confronto grafico 2D (usare PCA per il caso di tutte le variabili)
 - [ ] Commento interpretativo dei risultati, vedere le caratteristiche dei diversi cluster trovati (es statistiche descrittive ecc)
+- [ ] External: adjusted rand index, meila variation index, Accuracy, Confusion matrix, ecc. Fare prima sul tutto il dataset e poi dividere il dataset e fare solo su test set.
 
 ### 4. Applicazione delle tecniche di mixture of regression
 
