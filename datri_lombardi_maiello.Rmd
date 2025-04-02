@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(message=FALSE, warning=FALSE)
 
-packages <- c("mclust", "reshape2", "ggplot2", "GGally", "dplyr", "clustertend", "cluster", "FNN", "FactoMineR", "factoextra")
+packages <- c("mclust", "reshape2", "ggplot2", "GGally", "dplyr", "clustertend", "cluster", "FNN", "FactoMineR", "factoextra", "caret")
 
 for (pkg in packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -25,16 +25,16 @@ Il presente progetto si propone di applicare diverse tecniche di clustering al d
 
 TODO: specificare PCA e mixture of regression
 
-Tra diversi dataset consigliati dai docenti, è stato scelto il dataset **banknote**, per un motivo puramente professionale, essendo tutti i membri del team legati professionalmente alle banconote.  
-TODO: togliere?  
+Tra diversi dataset consigliati dai docenti, è stato scelto il dataset **banknote**, per un motivo puramente professionale, essendo tutti i membri del team legati professionalmente alle banconote.
+TODO: togliere?
 
 Il documento è organizzato nei seguenti capitoli:
 
-1.  **Introduzione**: Presentazione del progetto, degli obiettivi e del contesto.  
-2.  **Descrizione del Dataset e Analisi Esplorativa**: Esplorazione preliminare dei dati, analisi descrittiva e operazioni di preprocessing.  
-3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei metodi di clustering (gerarchico, partizionale e model-based).  
-4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).  
-5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.  
+1.  **Introduzione**: Presentazione del progetto, degli obiettivi e del contesto.
+2.  **Descrizione del Dataset e Analisi Esplorativa**: Esplorazione preliminare dei dati, analisi descrittiva e operazioni di preprocessing.
+3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei metodi di clustering (gerarchico, partizionale e model-based).
+4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).
+5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.
 
 
 # 2. Descrizione del Dataset e Analisi Esplorativa
@@ -90,12 +90,13 @@ colSums(is.na(banknote))
 Non c'è nessun valore mancante nelle colonne.
 
 ## Analisi Esplorativa dei Dati (EDA)
+Questa sezione fornisce una panoramica iniziale del dataset banknote, evidenziando la struttura, le principali statistiche descrittive e le relazioni tra le variabili.
+Queste informazioni sono fondamentali per orientare le successive fasi di clustering e per capire eventuali necessità di preprocessing (ad es. scaling o trasformazioni) prima
+dell'applicazione dei metodi di clustering.
 
 ### Analisi delle Correlazioni
 
-Verifichiamo le correlazioni tra le variabili numeriche per capire se
-esistono relazioni forti che potrebbero influenzare l'analisi di
-clustering.
+Verifichiamo le correlazioni tra le variabili numeriche per capire se esistono relazioni forti che potrebbero influenzare l'analisi di clustering.
 
 ```{r}
 cor_matrix <- cor(banknote[, -1])
@@ -125,8 +126,7 @@ Se trovi correlazioni elevate, suggerisci che una riduzione della dimensionalit�
 
 ### Distribuzione delle Variabili
 
-Infine, esaminiamo la distribuzione di ciascuna variabile con degli
-istogrammi:
+Infine, esaminiamo la distribuzione di ciascuna variabile con degli istogrammi:
 
 ```{r}
 # Impostiamo un layout per visualizzare gli istogrammi
@@ -159,29 +159,20 @@ ggpairs(banknote[,-1],upper = list(continuous = "density", combo = "box_no_facet
         lower = list(continuous = "points", combo = "dot_no_facet"),aes(colour=banknote$Status))
 ```
 
-TODO: Commento:
-
-```
-Analizza eventuali pattern o raggruppamenti evidenti nei grafici.
-
-Commenta su come alcune coppie di variabili sembrano essere correlate o meno.
-
-Se esiste la variabile di classe, valuta se le osservazioni appartengono a gruppi distinti già visibili.
-```
+Lungo la diagonale sono visibili le distribuzioni univariate delle variabili. Si nota una sovrapposizione parziale tra i due gruppi di colore (Status), ma anche zone in cui uno dei due colori prevale.
+Nei grafici di densità bivariata (metà diagonale superiore della matrice) e negli scatter plot (metà diagonale inferiore della matrice), si osservano alcune regioni in cui i punti di uno stesso colore tendono a concentrarsi, suggerendo cluster parzialmente distinti.
+Nonostante la sovrapposizione in diverse aree, si intravedono regioni in cui un gruppo prevale. Ciò suggerisce che un algoritmo di classificazione o di clustering potrebbe distinguere parzialmente le due classi, anche se non in modo perfetto con una singola coppia di variabili.
+È importante sottolineare che questo grafico mostra solo le relazioni a coppie. Ciò significa che l'analisi si limita a considerare due variabili alla volta, mentre una clusterizzazione netta potrebbe emergere solo quando si considerano contemporaneamente più variabili. In altre parole, anche se alcune coppie non evidenziano una separazione chiara, combinando più dimensioni si potrebbe scoprire una struttura clusterizzata più marcata.
+Il fatto che in alcune proiezioni (coppie di variabili) si vedano zone di separazione o contorni distinti suggerisce che esistono sottostrutture nei dati.
 
 
-Questa sezione fornisce una panoramica iniziale del dataset banknote,
-evidenziando la struttura, le principali statistiche descrittive e le
-relazioni tra le variabili. Queste informazioni sono fondamentali per
-orientare le successive fasi di clustering e per capire eventuali
-necessità di preprocessing (ad es. scaling o trasformazioni) prima
-dell'applicazione dei metodi di clustering.
-
-## Metodi per valutare la tendenza del dataset ad essere clusterizzato
+## Metodi per valutare la tendenza al clustering del dataset banknote
 Misure che aiutano a determinare se un dataset è adatto per il clustering, valutando quanto i dati siano distribuiti in modo casuale o contengano una struttura raggruppata.
 
 ### Hopkins statistics
-La Hopkins Statistics è una misura che può assumere valori tra 0 e 1, più il valore è vicino allo 0 più il dataset ha una struttura clusterizzata (ossia presenta una buona separazione tra gruppi). Se assume un valore tra 0.5 o più significa che il dataset non presenta una struttura di gruppo significativa e probabilmente sono distribuiti con una distribuzione uniforme.
+La Hopkins statistic serve a valutare la tendenza al clustering del dataset reale confrontando la sua struttura con quella di un insieme di punti generati casualmente.
+Si tratta di una una misura che può assumere valori tra 0 e 1, più il valore è vicino allo 0 più il dataset ha una struttura clusterizzata (ossia presenta una buona separazione tra gruppi).
+Se assume un valore tra 0.5 o più significa che il dataset non presenta una struttura di gruppo significativa e probabilmente le osservazione sono distribuite con una distribuzione uniforme.
 ```{r}
 library(clustertend)
 
@@ -191,23 +182,41 @@ set.seed(987)
 
 hopkins_stat <- hopkins(banknote_num, n = nrow(banknote_num) - 1)
 
-print(hopkins_stat)
-print(hopkins_stat$H)
+random_df <- apply(banknote_num, 2,
+                   function(x){runif(length(x), min(x), max(x))})
+random_df <- as.data.frame(random_df)
 
+set.seed(987)
+
+hopkins_stat_rand <- hopkins(random_df, n = nrow(random_df)-1)
+
+cat("Hopkins Statistics on Banknote dataset:", hopkins_stat$H, "\n")
+cat("Hopkins Statistics on Random dataset:", hopkins_stat_rand$H, "\n")
 ```
+Un valore di Hopkins pari a 0.2519264, essendo inferiore a 0.5, indica una tendenza alla clusterizzazione. In altre parole, le distanze tra i punti reali sono molto più ridotte rispetto a quelle dei punti generati casualmente, suggerendo la presenza di gruppi ben definiti nel dataset. Questo risultato supporta l'ipotesi che il dataset sia strutturato in cluster distinti.
 
-### VAT
-produce una matrice di dissimilarità ordinata, va visto se si vanno a formare lungo la diagonale secondaria del grafico, dei blocchi rossi che rappresentano regioni di osservazioni che condividono una forte similarità
+### Visual Assessment of cluster Tendency (VAT)
+L'algoritmo VAT produce una matrice di dissimilarità ordinata, ottenuta riorganizzando le righe e le colonne della matrice delle distanze per evidenziare eventuali blocchi di punti “ravvicinati” (ossia potenziali cluster). Visualizziamo la matrice con l'intento di verificare se si formano lungo la diagonale secondaria del grafico, dei blocchi rossi che rappresentano regioni di osservazioni che condividono una forte similarità.
 
 ```{r}
-#fviz_dist(dist(banknote), show_labels = FALSE) +
+library("factoextra")
+
+fviz_dist(dist(banknote), show_labels = FALSE) +
+labs(title = "Banknote data")
+
+fviz_dist(dist(random_df), show_labels = FALSE) +
+labs(title = "Random data")
 ```
+
+Nei grafici VAT il rosso indica alta similarità (ossia bassa dissimilarità), mentre il blu indica bassa similarità (ossia alta dissimilarità).
+Relativamente al grafico del dataset banknote, notiamo che lungo la diagonale sono presenti regioni rosse che indicano dati simili tra loro, suggerendo la presenza di cluster.
+La presenza di zone blu che evidenziano una maggiore dissimilarità tra gruppi di dati, supporta l'ipotesi che esistano cluster distinti nel dataset.
+Inoltre la presenza di transizioni marcate dal rosso al blu conferma che esistono confini ben definiti tra i cluster.
 
 ## PCA
 In questa sezione applichiamo la PCA sul dataset, considerando solo le colonne numeriche. Anche se le variabili sono tutte misurate in millimetri e quindi nella stessa scala, applichiamo comunque la standardizzazione per evitare che differenze nella dispersione (variabili con varianze maggiori) influenzino in modo sproporzionato i risultati della PCA.
 ```{r}
 library("FactoMineR")
-library("factoextra")
 
 banknote_num <- banknote[, -1]
 head(banknote_num)
@@ -320,23 +329,36 @@ seguiamo questi passaggi:
     tagliando il dendrogramma a un livello appropriato.
 
 ```{r hierarchical-clustering}
+df <- scale(banknote_num)
 
-# # 1. Calcolo della Matrice di Distanza
-# # Utilizziamo la distanza euclidea tra le prime 4 variabili numeriche
-# distanze <- dist(banknote[, 2:7], method = "euclidean")
+distanze <- dist(df, method = "euclidean")
 
-# # 2. Costruzione del Dendrogramma
-# # Applichiamo il clustering gerarchico agglomerativo
-# clustering_hierarchico <- hclust(distanze, method = "ward.D2")
+round(as.matrix(distanze)[1:6, 1:6],digits = 2)
 
-# # Visualizziamo il dendrogramma
+clustering_hierarchico <- hclust(distanze, method = "ward.D2")
+
+# Visualizziamo il dendrogramma
+fviz_dend(clustering_hierarchico, cex = 0.5)
 # plot(clustering_hierarchico, main = "Dendrogramma del Clustering Gerarchico Agglomerativo",
 #      xlab = "", sub = "", cex = 0.9)
+library("cluster")
 
-# res.agnes <- agnes(x = banknote,
-# stand = )
-# fviz_dend(res.agnes, cex = 0.6, k = 4)
+res.agnes <- agnes(x = banknote_num,
+                   stand = TRUE,
+                   metric = "euclidean",
+                   method = "ward"
+)
 
+fviz_dend(res.agnes, cex = 0.6)
+
+```
+```{r}
+res.diana <- diana(x = banknote_num,
+                   stand = TRUE,
+                   metric = "euclidean"
+)
+
+fviz_dend(res.diana, cex = 0.6)
 ```
 
 ### Interpretazione del Dendrogramma
@@ -568,96 +590,96 @@ L'analisi verrà condotta in due fasi:
 2. Validazione su dati di test, dove il dataset verrà suddiviso in un set di training e un set di test. I cluster verranno individuati nel training set con i diversi algoritmi e poi utilizzati per classificare le osservazioni nel test set. Questo permetterà di valutare la capacità predittiva dei modelli nel riconoscere nuove osservazioni e analizzare la loro generalizzazione su dati non visti.
 
 
-```{r}
-# Learning
+# ```{r}
+# # Learning
 
-N=nrow(banknote)
-totIndex=seq(from=1,to=N,by=1)
-length(totIndex)
-gamma=0.7
-trainIndex=sample(totIndex,gamma*N, replace=F )
-banknote_L<-banknote[trainIndex,]
-nL=nrow(banknote_L)
-banknote_T<-banknote[-trainIndex,]
-nT=nrow(banknote_T)
-nL
-nT
-table(banknote$Status)
-table(banknote_L$Status)
-table(banknote_T$Status)
-#
-table(banknote$Status)/N*100
-table(banknote_L$Status)/nL*100
-table(banknote_T$Status)/nT*100
-
-
-#
-# what is the problem?
-#
-#install.packages("caret")
-library(caret) # CreateDataPartition is in the library "caret"
-# http://topepo.github.io/caret/data-splitting.html
-#
-#
-# Training, Validation and Test sets
-#
-gamma_L= 0.7 # proportion of units in the training set
-set.seed(1500)
-trainIndex <- createDataPartition(banknote$Status, p = gamma_L, 
-                                  list = FALSE, 
-                                  times = 1)
-banknote_L<-banknote[trainIndex,]
-nL<-nrow(banknote_L)
-nL
-table(banknote_L$Status)
-table(banknote_L$Status)/nL*100
-
-banknote_T<-banknote[-trainIndex,]
-nT<-nrow(banknote_T)
-nT
-table(banknote_T$Status)
-table(banknote_T$Status)/nT*100 
+# N=nrow(banknote)
+# totIndex=seq(from=1,to=N,by=1)
+# length(totIndex)
+# gamma=0.7
+# trainIndex=sample(totIndex,gamma*N, replace=F )
+# banknote_L<-banknote[trainIndex,]
+# nL=nrow(banknote_L)
+# banknote_T<-banknote[-trainIndex,]
+# nT=nrow(banknote_T)
+# nL
+# nT
+# table(banknote$Status)
+# table(banknote_L$Status)
+# table(banknote_T$Status)
+# #
+# table(banknote$Status)/N*100
+# table(banknote_L$Status)/nL*100
+# table(banknote_T$Status)/nT*100
 
 
-set.seed(10000)
-bankmixt2_L<-mvnormalmixEM(banknote_L[,c(6,7)], k = 2)
-summary(bankmixt2_L)
-plot(bankmixt2_L, density = TRUE,  cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5)
+# #
+# # what is the problem?
+# #
+# #install.packages("caret")
+# library(caret) # CreateDataPartition is in the library "caret"
+# # http://topepo.github.io/caret/data-splitting.html
+# #
+# #
+# # Training, Validation and Test sets
+# #
+# gamma_L= 0.7 # proportion of units in the training set
+# set.seed(1500)
+# trainIndex <- createDataPartition(banknote$Status, p = gamma_L, 
+#                                   list = FALSE, 
+#                                   times = 1)
+# banknote_L<-banknote[trainIndex,]
+# nL<-nrow(banknote_L)
+# nL
+# table(banknote_L$Status)
+# table(banknote_L$Status)/nL*100
 
-bankmixt2_L$class<-apply(bankmixt2_L$posterior,1,which.max)
+# banknote_T<-banknote[-trainIndex,]
+# nT<-nrow(banknote_T)
+# nT
+# table(banknote_T$Status)
+# table(banknote_T$Status)/nT*100 
 
-table(banknote_L$Status, bankmixt2_L$class)
+
+# set.seed(10000)
+# bankmixt2_L<-mvnormalmixEM(banknote_L[,c(6,7)], k = 2)
+# summary(bankmixt2_L)
+# plot(bankmixt2_L, density = TRUE,  cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5)
+
+# bankmixt2_L$class<-apply(bankmixt2_L$posterior,1,which.max)
+
+# table(banknote_L$Status, bankmixt2_L$class)
 
 
-alpha=bankmixt2_L$lambda
-mu1=bankmixt2_L$mu[[1]]
-mu2=bankmixt2_L$mu[[2]]
-Sigma1=bankmixt2_L$sigma[[1]]
-Sigma2=bankmixt2_L$sigma[[2]]
-alpha
-mu1
-Sigma1
-mu2
-Sigma2
+# alpha=bankmixt2_L$lambda
+# mu1=bankmixt2_L$mu[[1]]
+# mu2=bankmixt2_L$mu[[2]]
+# Sigma1=bankmixt2_L$sigma[[1]]
+# Sigma2=bankmixt2_L$sigma[[2]]
+# alpha
+# mu1
+# Sigma1
+# mu2
+# Sigma2
 
-library(mvtnorm)
-mu=rbind(mu1,mu2)
-mu
-p=2
-G=2
-Sigma=array(0, dim=c(p,p, G))
-Sigma[,,1]=Sigma1
-Sigma[,,2]=Sigma2
-Sigma
+# library(mvtnorm)
+# mu=rbind(mu1,mu2)
+# mu
+# p=2
+# G=2
+# Sigma=array(0, dim=c(p,p, G))
+# Sigma[,,1]=Sigma1
+# Sigma[,,2]=Sigma2
+# Sigma
 
-stat_T_mixt=matrix(0,nT,1+2*G+1)
-source("mixt2_pg.r")
-for (i in 1:nT) {
-  x=banknote_T[i,c(6:7)]
-  stat_T_mixt[i,]=mixt2_pg(x,alpha,mu, Sigma,G)
-}
-table(stat_T_mixt[,6],banknote_T$Status)
-```
+# stat_T_mixt=matrix(0,nT,1+2*G+1)
+# source("mixt2_pg.r")
+# for (i in 1:nT) {
+#   x=banknote_T[i,c(6:7)]
+#   stat_T_mixt[i,]=mixt2_pg(x,alpha,mu, Sigma,G)
+# }
+# table(stat_T_mixt[,6],banknote_T$Status)
+# ```
 
 
 
