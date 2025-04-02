@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(message=FALSE, warning=FALSE)
 
-packages <- c("mclust", "reshape2", "ggplot2", "GGally", "dplyr", "clustertend", "cluster", "FNN", "FactoMineR", "factoextra", "caret")
+packages <- c("mclust", "reshape2", "ggplot2", "GGally", "dplyr", "clustertend", "cluster", "FNN", "FactoMineR", "factoextra", "caret", "pheatmap", "clusterCrit", "NbClust", "fpc")
 
 for (pkg in packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -178,6 +178,8 @@ library(clustertend)
 
 banknote_num <- banknote[, -1]
 
+banknote_num <- scale(banknote_num)
+
 set.seed(987)
 
 hopkins_stat <- hopkins(banknote_num, n = nrow(banknote_num) - 1)
@@ -185,6 +187,8 @@ hopkins_stat <- hopkins(banknote_num, n = nrow(banknote_num) - 1)
 random_df <- apply(banknote_num, 2,
                    function(x){runif(length(x), min(x), max(x))})
 random_df <- as.data.frame(random_df)
+
+random_df <- scale(random_df)
 
 set.seed(987)
 
@@ -313,46 +317,224 @@ fviz_contrib(pca_result, choice = "var", axes = 2)
 Il **Clustering Gerarchico Agglomerativo (HAC)** è una tecnica di clustering che costruisce una gerarchia di cluster attraverso un approccio "bottom-up". Inizia considerando ogni punto dati come un cluster separato e, successivamente, unisce iterativamente i cluster più
 simili fino a formare un unico cluster che racchiude tutti i dati. Questo metodo non richiede la specifica del numero di cluster a priori e produce una rappresentazione ad albero, nota come **dendrogramma**, che facilita la visualizzazione delle relazioni tra i cluster.
 
-### Implementazione in R
+Per applicare il clustering gerarchico agglomerativo al nostro dataset, seguiamo questi passaggi:
 
-Per applicare il clustering gerarchico agglomerativo al nostro dataset,
-seguiamo questi passaggi:
+1.  **Scaling**:
 
-1.  **Calcolo della Matrice di Distanza**: Determiniamo le distanze tra
-    tutte le coppie di punti nel dataset. Una misura comune è la
-    distanza euclidea.
+2.  **Calcolo della Matrice di Distanza**: Determiniamo le distanze tra tutte le coppie di punti nel dataset. Una misura comune è la distanza euclidea.
 
-2.  **Costruzione del Dendrogramma**: Utilizziamo la funzione `hclust()`
-    per eseguire il clustering gerarchico e generare il dendrogramma.
+3.  **Applicazione del clustering agglomerativo**: Utilizziamo la funzione `hclust()` per eseguire il clustering gerarchico e generare il dendrogramma.
 
-3.  **Taglio del Dendrogramma**: Decidiamo il numero ottimale di cluster
-    tagliando il dendrogramma a un livello appropriato.
+4.  **Taglio del Dendrogramma**: Decidiamo il numero ottimale di cluster utilizzando varie tecniche, e tagliamo il dendrogramma al livello appropriato.
 
-```{r hierarchical-clustering}
+5.  **Valutazione**: Valutiamo i risultati del clustering utilizzando varie metriche.
+
+### Clustering con tutte le variabili
+
+Scaliamo il dataset, calcoliamo la relativa matrice di dissimilatità mediante distanza euclidea e la mostriamo.
+
+```{r dissimilar matrix}
+library(pheatmap)
+
 df <- scale(banknote_num)
 
 distanze <- dist(df, method = "euclidean")
 
-round(as.matrix(distanze)[1:6, 1:6],digits = 2)
+diss_matrix <- as.matrix(distanze)
 
-clustering_hierarchico <- hclust(distanze, method = "ward.D2")
-
-# Visualizziamo il dendrogramma
-fviz_dend(clustering_hierarchico, cex = 0.5)
-# plot(clustering_hierarchico, main = "Dendrogramma del Clustering Gerarchico Agglomerativo",
-#      xlab = "", sub = "", cex = 0.9)
-library("cluster")
-
-res.agnes <- agnes(x = banknote_num,
-                   stand = TRUE,
-                   metric = "euclidean",
-                   method = "ward"
-)
-
-fviz_dend(res.agnes, cex = 0.6)
-
+pheatmap(diss_matrix,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         show_rownames = FALSE,
+         show_colnames = FALSE,
+         color = colorRampPalette(c("blue", "white", "red"))(50),
+         border_color = NA)
 ```
-```{r}
+
+Applichiamo il clustering con metodo di linkage 'ward' che generalmente insieme all'average linkage, performa meglio.
+
+```{r hierarchical agglomerative clustering hclust}
+hclust_clustering <- hclust(distanze, method = "ward.D2")
+```
+
+Guardiamo il dendogramma cercando di identificare il numero ottimale di cluster, utilizziamo anche altri metodi che ci premetteranno di prendere una scelta migliore.
+
+#### Numero di cluster
+```{r hierarchical agglomerative clustering dend}
+fviz_dend(hclust_clustering, show_labels = FALSE, palette = "jco", as.ggplot = TRUE)
+```
+Vediamo mediante il grafico Elbow 
+```{r hierarchical agglomerative clustering elbow}
+fviz_nbclust(df, FUN = hcut, method = "wss") +
+    geom_vline(xintercept = 4, linetype = 2) +
+    labs(subtitle = "Elbow method")
+```
+Vediamo il grafico Silhouette 
+```{r hierarchical agglomerative clustering hclust silhouette}
+fviz_nbclust(df, FUN = hcut, method = "silhouette") +
+    labs(subtitle = "Silhouette method")
+```
+
+Calcoliamo la Gap Statistics
+```{r hierarchical agglomerative clustering hclust gap statistics}
+set.seed(123)
+fviz_nbclust(df, FUN = hcut, method = "gap_stat", nboot = 500)+
+    labs(subtitle = "Gap statistic method")
+```
+
+
+```{r hierarchical agglomerative clustering hclust NbClust}
+library("NbClust")
+
+nb <- NbClust(df, distance = "euclidean", min.nc = 2, max.nc= 10, method = "ward.D2")
+```
+
+Generalmente si potrebbe optare per una scelta di "maggioranza" tra i vari metodi, tuttavia in questo caso hanno restituito tre risultati diversi. Si opta per considerare un numero di cluster pari a 3
+
+#### Taglio del dendrogramma
+```{r hierarchical agglomerative clustering hclust cut}
+cluster_cut <- cutree(hclust_clustering, k = 3)
+
+table(cluster_cut)
+
+fviz_dend(hclust_clustering, k = 3,
+        cex = 0.5,
+        k_colors = c("#2E9FDF", "#00AFBB", "#E7B800", "#FC4E07"),
+        color_labels_by_k = TRUE,
+        rect = TRUE
+)
+```
+
+```{r hierarchical agglomerative clustering hclust pairs}
+pairs(df, gap=0, pch=cluster_cut, col=c("orange", "green", "blue", "violet")[cluster_cut])
+```
+
+### Valutazione
+
+Valutiamo ora il clustering ottenuto mediante tre metriche: silhouette, dunn index e Adjusted rand index.
+```{r hierarchical agglomerative clustering hclust cut sil}
+library(cluster)
+
+sil <- silhouette(cluster_cut, distanze)
+
+fviz_silhouette(sil, palette = "jco", ggtheme = theme_classic())
+```
+
+```{r hierarchical agglomerative clustering hclust dunn}
+library(clusterCrit)
+
+dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
+
+print(paste("Dunn Index:", dunn_index))
+```
+```{r hierarchical agglomerative clustering hclust cri}
+library("fpc")
+
+status <- as.numeric(banknote$Status)
+
+clust_stats <- cluster.stats(d = dist(df), status, cluster_cut)
+
+print(paste("Corrected Rand Index:", clust_stats$corrected.rand))
+
+print(paste("Meila's Index:", clust_stats$vi))
+```
+L'accordo tra i tipi di status e la soluzione di clustering è circa 0.792, utilizzando il corrected Rand index.
+Il disaccordo tra i tipi di status e la soluzione di clustering è circa 0.359, utilizzando l'indice VI di Meila.
+Entrambe le metriche suggeriscono che la soluzione di clustering è vicina alla vera suddivisione basata sullo status. La buona concordanza (alta CRI e basso VI) evidenzia che il metodo di clustering adottato è adeguato per distinguere correttamente i due gruppi (genuine e counterfeit) presenti nel dataset.
+
+### Ottimizzazione
+
+Eseguiamo ora un'ottimizzazione del clustering, trovando il numero di cluster e il metodo di linkage che ottimizzando le tre metriche viste prima.
+
+```{r hierarchical agglomerative clustering linkage methods}
+library(dplyr)
+
+linkage_methods <- c("ward.D2", "single", "complete", "average", "centroid")
+
+results_all <- data.frame(Method = character(),
+                          k = numeric(),
+                          Silhouette = numeric(),
+                          Dunn = numeric(),
+                          Corrected_Rand = numeric(),
+                          VI = numeric(),
+                          stringsAsFactors = FALSE)
+
+min_k <- 2
+max_k <- 10
+
+for(method in linkage_methods) {
+  hclust_obj <- hclust(distanze, method = method)
+  
+  for(k in min_k:max_k) {
+    cluster_cut <- cutree(hclust_obj, k = k)
+    
+    sil <- silhouette(cluster_cut, distanze)
+    avg_sil <- mean(sil[, 3])
+    
+    dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
+    
+    clust_stats <- cluster.stats(dist(df), status, cluster_cut)
+
+    corrected_rand <- clust_stats$corrected.rand
+
+    vi_val <- clust_stats$vi
+    
+    results_all <- rbind(results_all, data.frame(Method = method,
+                                                 k = k,
+                                                 Silhouette = avg_sil,
+                                                 Dunn = dunn_index,
+                                                 Corrected_Rand = corrected_rand,
+                                                 VI = vi_val,
+                                                 stringsAsFactors = FALSE))
+  }
+}
+
+best_silhouette <- results_all %>% group_by(Method) %>% filter(Silhouette == max(Silhouette))
+print(best_silhouette)
+
+best_dunn <- results_all %>% group_by(Method) %>% filter(Dunn == max(Dunn))
+print(best_dunn)
+
+best_corrected_rand <- results_all %>% group_by(Method) %>% filter(Corrected_Rand == max(Corrected_Rand))
+print(best_corrected_rand)
+
+best_vi <- results_all %>% group_by(Method) %>% filter(VI == min(VI))
+print(best_vi)
+```
+```{r hierarchical agglomerative clustering best}
+library(dplyr)
+
+results_ranked <- results_all %>%
+  mutate(
+    rank_sil = rank(-Silhouette, ties.method = "min"),
+    rank_dunn = rank(-Dunn, ties.method = "min"),
+    rank_corrected_rand = rank(-Corrected_Rand, ties.method = "min"),
+    
+    rank_vi = rank(VI, ties.method = "min"),
+    
+    total_rank = rank_sil + rank_dunn + rank_corrected_rand + rank_vi
+  )
+
+best_overall <- results_ranked %>% arrange(total_rank) %>% head(1)
+print(best_overall)
+```
+
+# ```{r hierarchical agglomerative clustering agnes}
+# library("cluster")
+
+# res.agnes <- agnes(x = banknote_num,
+#                    stand = TRUE,
+#                    metric = "euclidean",
+#                    method = "ward"
+# )
+
+# fviz_dend(res.agnes, cex = 0.6, k = 3)
+
+# ```
+
+## 3.2 Clustering Gerarchico Divisivo
+
+```{r hierarchical divisive clustering diana}
 res.diana <- diana(x = banknote_num,
                    stand = TRUE,
                    metric = "euclidean"
@@ -466,7 +648,6 @@ In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-medoids co
 Come in precedenza, si analizzano prima i grafici a dispersione e successivamente i due cluster.
 
 ```{r}
-library(cluster)
 head(df, n = 3)
 
 pam.res <- pam(df, 2)

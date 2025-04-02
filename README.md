@@ -16,28 +16,29 @@ Regression.
 - [ ] Descrizione delle variabili (dimensione, tipologia, eventuali correlazioni) del dataset banknote.
 - [ ] Analisi Esplorativa dei Dati (EDA)
 - [ ] Preprocessing
-- [ ] Verificare la presenza di cluster nei dati (K>1):
+- [x] Verificare la presenza di cluster nei dati (K>1):
     * Matrice di scatterplot con le variabili
     * Statistical method: Hopkins statistics
     * Visual method: VAT algorithm
+- [x] Calcolo della PCA da d a 2 variabili
 - [ ] Commento che d'ora in avanti si faranno per ogni algoritmo, 3 diverse prove:
     - Tutte le variabili
     - Solo le variaibli diagonal e Bottom
     - Due variabili post PCA
-- [ ] Calcolo della PCA da d a 2 variabili
 
 ### 3. Clustering
 
 #### 3.1. Clustering Gerarchico Agglomerativo
 
 For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo PCA"]:
+TODO: ["variaibli diagonal e Bottom", "variaibli dopo PCA"]:
 
-- [ ] Eseguire l'algoritmo
-- [ ] Determinare K:
+- [x] Eseguire l'algoritmo
+- [x] Determinare K:
     * Direct method: elbow, siluette
     * Statistical method: GAP statistic
     * NbClust --> Calcola su diversi indici Tra cui quelli sopra
-- [ ] Goodness dei risultati (cluster.stats() calcola diversi indici)
+- [x] Goodness dei risultati (cluster.stats() calcola diversi indici)
     * Intenal: silhouette width, Dunn index
 - [ ] Commentare i risultati
 
