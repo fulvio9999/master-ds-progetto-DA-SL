@@ -76,7 +76,7 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibili dopo 
 - [ ] Commento di comparazione tra le diverse tecniche e tra il diverso numero di variabili usate.
 - [ ] Confronto grafico 2D (usare PCA per il caso di tutte le variabili)
 - [ ] Commento interpretativo dei risultati, vedere le caratteristiche dei diversi cluster trovati (es statistiche descrittive ecc)
-- [ ] External: adjusted rand index, meila variation index, Accuracy, Confusion matrix, ecc. Fare prima sul tutto il dataset e poi dividere il dataset e fare solo su test set:
+- [x] External: adjusted rand index, meila variation index, Accuracy, Confusion matrix, ecc. Fare prima sul tutto il dataset e poi dividere il dataset e fare solo su test set:
       - Per l'intero dataset e per il train/test:
          - Per ogni tecnica di clustering
             - Per ogni ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibili dopo PCA"]:
