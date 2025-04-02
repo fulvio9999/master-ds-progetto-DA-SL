@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(message=FALSE, warning=FALSE)
 
-packages <- c("mclust", "reshape2", "ggplot2", "GGally", "dplyr", "clustertend", "cluster", "FNN", "FactoMineR", "factoextra", "caret", "pheatmap", "clusterCrit", "NbClust", "fpc")
+packages <- c("mclust", "reshape2", "ggplot2", "GGally", "dplyr", "clustertend", "cluster", "FNN", "FactoMineR", "factoextra", "caret", "pheatmap", "clusterCrit", "NbClust", "fpc", "scatterplot3d")
 
 for (pkg in packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -224,7 +224,7 @@ library("FactoMineR")
 
 banknote_num <- banknote[, -1]
 head(banknote_num)
-pca_result <- PCA(banknote_num, graph = FALSE)
+pca_result <- PCA(banknote_num, scale = TRUE, graph = FALSE)
 ```
 
 #### Visualizzazione e interpretazione dei risultati
@@ -356,20 +356,22 @@ Applichiamo il clustering con metodo di linkage 'ward' che generalmente insieme 
 ```{r hierarchical agglomerative clustering hclust}
 hclust_clustering <- hclust(distanze, method = "ward.D2")
 ```
-
 Guardiamo il dendogramma cercando di identificare il numero ottimale di cluster, utilizziamo anche altri metodi che ci premetteranno di prendere una scelta migliore.
 
 #### Numero di cluster
 ```{r hierarchical agglomerative clustering dend}
-fviz_dend(hclust_clustering, show_labels = FALSE, palette = "jco", as.ggplot = TRUE)
+fviz_dend(hclust_clustering, show_labels = FALSE, as.ggplot = TRUE)
 ```
-Vediamo mediante il grafico Elbow 
+Il dendrogramma risultante mostra come i punti dati vengono uniti progressivamente in cluster. L'altezza dei rami indica la distanza a cui avviene la fusione: rami più bassi corrispondono a fusioni tra punti o cluster molto simili. Analizzando il dendrogramma, possiamo decidere il
+numero di cluster tagliando l'albero a un'altezza che separa i gruppi in modo significativo.
+
+Vediamo mediante il grafico Elbow
 ```{r hierarchical agglomerative clustering elbow}
 fviz_nbclust(df, FUN = hcut, method = "wss") +
     geom_vline(xintercept = 4, linetype = 2) +
     labs(subtitle = "Elbow method")
 ```
-Vediamo il grafico Silhouette 
+Vediamo il grafico Silhouette
 ```{r hierarchical agglomerative clustering hclust silhouette}
 fviz_nbclust(df, FUN = hcut, method = "silhouette") +
     labs(subtitle = "Silhouette method")
@@ -381,7 +383,6 @@ set.seed(123)
 fviz_nbclust(df, FUN = hcut, method = "gap_stat", nboot = 500)+
     labs(subtitle = "Gap statistic method")
 ```
-
 
 ```{r hierarchical agglomerative clustering hclust NbClust}
 library("NbClust")
@@ -411,7 +412,7 @@ pairs(df, gap=0, pch=cluster_cut, col=c("orange", "green", "blue", "violet")[clu
 
 ### Valutazione
 
-Valutiamo ora il clustering ottenuto mediante tre metriche: silhouette, dunn index e Adjusted rand index.
+Valutiamo ora la qualità dei risultati del nostro algoritmo di clustering mediante tre metriche: Silhouette, Dunn index e Corrected rand index.
 ```{r hierarchical agglomerative clustering hclust cut sil}
 library(cluster)
 
@@ -419,6 +420,9 @@ sil <- silhouette(cluster_cut, distanze)
 
 fviz_silhouette(sil, palette = "jco", ggtheme = theme_classic())
 ```
+
+Se i dati contengono cluster compatti e ben separati, ci si aspetta che il diametro dei cluster sia piccolo e che la distanza tra i cluster sia grande.
+Pertanto l'indice di Dunn deve essere massimizzato.
 
 ```{r hierarchical agglomerative clustering hclust dunn}
 library(clusterCrit)
@@ -449,45 +453,45 @@ Eseguiamo ora un'ottimizzazione del clustering, trovando il numero di cluster e 
 ```{r hierarchical agglomerative clustering linkage methods}
 library(dplyr)
 
-linkage_methods <- c("ward.D2", "single", "complete", "average", "centroid")
+evaluate_clustering <- function(df, distanze, status, linkage_methods = c("ward.D2", "single", "complete", "average", "centroid"), min_k = 2, max_k = 10) {
+    results_all <- data.frame(Method = character(),
+                            k = numeric(),
+                            Silhouette = numeric(),
+                            Dunn = numeric(),
+                            Corrected_Rand = numeric(),
+                            VI = numeric(),
+                            stringsAsFactors = FALSE)
 
-results_all <- data.frame(Method = character(),
-                          k = numeric(),
-                          Silhouette = numeric(),
-                          Dunn = numeric(),
-                          Corrected_Rand = numeric(),
-                          VI = numeric(),
-                          stringsAsFactors = FALSE)
+    for(method in linkage_methods) {
+        hclust_obj <- hclust(distanze, method = method)
+        
+        for(k in min_k:max_k) {
+            cluster_cut <- cutree(hclust_obj, k = k)
+            
+            sil <- silhouette(cluster_cut, distanze)
+            avg_sil <- mean(sil[, 3])
+            
+            dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
+            
+            clust_stats <- cluster.stats(distanze, status, cluster_cut)
 
-min_k <- 2
-max_k <- 10
+            corrected_rand <- clust_stats$corrected.rand
 
-for(method in linkage_methods) {
-  hclust_obj <- hclust(distanze, method = method)
-  
-  for(k in min_k:max_k) {
-    cluster_cut <- cutree(hclust_obj, k = k)
-    
-    sil <- silhouette(cluster_cut, distanze)
-    avg_sil <- mean(sil[, 3])
-    
-    dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
-    
-    clust_stats <- cluster.stats(dist(df), status, cluster_cut)
-
-    corrected_rand <- clust_stats$corrected.rand
-
-    vi_val <- clust_stats$vi
-    
-    results_all <- rbind(results_all, data.frame(Method = method,
-                                                 k = k,
-                                                 Silhouette = avg_sil,
-                                                 Dunn = dunn_index,
-                                                 Corrected_Rand = corrected_rand,
-                                                 VI = vi_val,
-                                                 stringsAsFactors = FALSE))
-  }
+            vi_val <- clust_stats$vi
+            
+            results_all <- rbind(results_all, data.frame(Method = method,
+                                                        k = k,
+                                                        Silhouette = avg_sil,
+                                                        Dunn = dunn_index,
+                                                        Corrected_Rand = corrected_rand,
+                                                        VI = vi_val,
+                                                        stringsAsFactors = FALSE))
+        }
+    }
+    return(results_all)
 }
+
+results_all <- evaluate_clustering(df, distanze, status)
 
 best_silhouette <- results_all %>% group_by(Method) %>% filter(Silhouette == max(Silhouette))
 print(best_silhouette)
@@ -526,16 +530,71 @@ final <- eclust(df, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.
 fviz_cluster(final, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
 ```
 
-```{r hierarchical agglomerative clustering agnes}
-# library("cluster")
+## Clustering con PCA
 
-# res.agnes <- agnes(x = banknote_num,
-#                    stand = TRUE,
-#                    metric = "euclidean",
-#                    method = "ward"
-# )
+```{r hierarchical agglomerative clustering pca best}
 
-# fviz_dend(res.agnes, cex = 0.6, k = 3)
+banknote_pca_num <- banknote_pca[,-1]
+
+results_all_pca <- evaluate_clustering(banknote_pca_num, dist(banknote_pca_num), status)
+
+results_ranked_pca <- results_all_pca %>%
+  mutate(
+    rank_sil = rank(-Silhouette, ties.method = "min"),
+    rank_dunn = rank(-Dunn, ties.method = "min"),
+    rank_corrected_rand = rank(-Corrected_Rand, ties.method = "min"),
+    rank_vi = rank(VI, ties.method = "min"),
+    
+    total_rank = rank_sil + rank_dunn + rank_corrected_rand + rank_vi
+  )
+
+best_overall_pca <- results_ranked_pca %>% arrange(total_rank) %>% head(1)
+print(best_overall_pca)
+```
+```{r hierarchical agglomerative clustering pca eclust}
+library(scatterplot3d)
+
+final_pca <- eclust(banknote_pca_num, "hclust", k = 2, hc_metric = "euclidean", hc_method = "average", graph = FALSE)
+
+clusters <- final_pca$cluster
+
+scatterplot3d(banknote_pca_num,
+              color = clusters,
+              pch = 19,
+              main = "Clustering su PCA (PC1, PC2, PC3)",
+              xlab = "PC1", ylab = "PC2", zlab = "PC3")
+
+legend("topright", legend = unique(clusters), col = unique(clusters), pch = 19, title = "Cluster")
+
+```
+## Clustering con solo le variabili Bottom e Diagonal
+
+```{r hierarchical agglomerative clustering bottom e diagonal}
+
+banknote_bottom_diagonal <- banknote %>% select(Bottom, Diagonal)
+
+banknote_bd_scaled <- scale(banknote_bottom_diagonal)
+
+results_all_bd <- evaluate_clustering(banknote_bd_scaled, dist(banknote_bd_scaled), status)
+
+results_ranked_bd <- results_all_bd %>%
+  mutate(
+    rank_sil = rank(-Silhouette, ties.method = "min"),
+    rank_dunn = rank(-Dunn, ties.method = "min"),
+    rank_corrected_rand = rank(-Corrected_Rand, ties.method = "min"),
+    rank_vi = rank(VI, ties.method = "min"),
+    
+    total_rank = rank_sil + rank_dunn + rank_corrected_rand + rank_vi
+  )
+
+best_overall_bd <- results_ranked_bd %>% arrange(total_rank) %>% head(1)
+print(best_overall_bd)
+```
+
+```{r hierarchical agglomerative clustering bottom e diagonal eclust}
+final_bd <- eclust(banknote_bd_scaled, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
+
+fviz_cluster(final_bd, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
 ```
 
 ## 3.2 Clustering Gerarchico Divisivo
@@ -546,13 +605,13 @@ res.diana <- diana(x = banknote_num,
                    metric = "euclidean"
 )
 
-fviz_dend(res.diana, cex = 0.6)
+diana_clustering <- eclust(df, "diana", k = 2, hc_metric = "euclidean", graph = FALSE)
+
+fviz_dend(res.diana, cex = 0.6, show_labels = FALSE, as.ggplot = TRUE)
 ```
 
-### Interpretazione del Dendrogramma
-
-Il dendrogramma risultante mostra come i punti dati vengono uniti in cluster successivamente. L'altezza dei rami indica la distanza a cui avviene la fusione: rami più bassi corrispondono a fusioni tra punti o cluster molto simili. Analizzando il dendrogramma, possiamo decidere il
-numero di cluster tagliando l'albero a un'altezza che separa i gruppi in modo significativo. Vantaggi e Svantaggi del Clustering Gerarchico
+```
+###Vantaggi e Svantaggi del Clustering Gerarchico
 
 #### Vantaggi:
 
