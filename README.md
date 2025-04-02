@@ -46,11 +46,11 @@ TODO: ["variaibli diagonal e Bottom", "variaibli dopo PCA"]:
 
 For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo PCA"]:
 
-- [ ] Eseguire l'algoritmo
-- [ ] Determinare K:
+- [x] Determinare K:
     * Direct method: elbow, siluette
     * Statistical method: GAP statistic
     * NbClust --> Calcola su diversi indici Tra cui quelli sopra
+- [x] Eseguire l'algoritmo
 - [ ] Goodness dei risultati (cluster.stats() calcola diversi indici)
     * Intenal: silhouette width, Dunn index
 - [ ] Commentare i risultati
