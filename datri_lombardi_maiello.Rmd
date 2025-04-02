@@ -1027,118 +1027,382 @@ summary(gmm_result3)
 ```
 
 Anche in questo caso, i valori di BIC e ICL sono concordi: per un numero di cluster pari a 3 si ottiene un BIC di circa -1630 e un ICL di -1657, mentre per 2 cluster il BIC risulta attorno a -1614 e l'ICL a -1616. Questo dimostra che anche l'ICL suggerisce che il modello ottimale è quello con 2 cluster.  
-
-
 ## 3.1.5. Validazione e visualizzazione dei risultati
 
 TODO: inserire commento introduttivo
 
 ### 3.1.5.3. Validazione con la classe reale
 
-In questa sezione, esamineremo i diversi metodi di cluster utilizzati sul dataset 'banknote' fissando il numero di cluster pari al numero di classi reali, ossia pari a 2. In questo modo faremo uso di tecniche di validazione esterne perchè abbiamo a disposizione la reale classe delle osservazioni (variabile 'Status').  
-Si farà uso di misure quali: adjusted Rand Index, Meila variation index e tutte le misure che hanno a che fare con il learning di classificazione (accuratezza, Specifity, Recall, Confusion Matrix, AUC, ecc.).  
-Inizialmente tale misure verranno calcolate sull'intero dataset in cui sono stati eseguiti gli algoritmi per il calcolo dei cluster; successivamente sarà diviso il dataset in training e testing, nel primo saranno trovati i cluster con i diversi algoritmi e nel secondo saranno valutate le performance con tali misure, per evidenziare come si comportano questi ultimi per quanto riguarda la predizione di nuovi dati.
-
 In questa sezione analizzeremo la qualità dei diversi metodi di clustering applicati al dataset banknote, fissando il numero di cluster pari al numero di classi reali, ovvero 2. Questo approccio ci permette di utilizzare tecniche di validazione esterne, dato che disponiamo delle etichette reali delle osservazioni (variabile 'Status').  
 Per valutare l'efficacia dei cluster identificati, utilizzeremo diverse metriche, tra cui:  
 - Adjusted Rand Index (ARI) e Meila Variation Index, che misurano il grado di concordanza tra il clustering ottenuto e la classificazione reale.
 - Metriche di valutazione proprie del machine learning supervisionato, come accuratezza, specificità, recall, matrice di confusione e AUC, per interpretare il clustering come un problema di classificazione binaria.  
+Verranno valutate le misure di validazione al variare del numero di variabili utilizzate nel clustering. In particolare, analizzeremo tre configurazioni differenti:  
+- **Dataset completo**: utilizzo di tutte le variabili disponibili.
+- **Dataset ridotto**: utilizzo esclusivo delle variabili 'Diagonal' e 'Bottom', identificate come le più discriminative.
+- **Dataset trasformato**: utilizzo delle variabili ottenute tramite PCA.
 
-L'analisi verrà condotta in due fasi:  
-1. Valutazione sull'intero dataset, per confrontare le prestazioni dei vari algoritmi di clustering utilizzando l'intera popolazione di dati.
-2. Validazione su dati di test, dove il dataset verrà suddiviso in un set di training e un set di test. I cluster verranno individuati nel training set con i diversi algoritmi e poi utilizzati per classificare le osservazioni nel test set. Questo permetterà di valutare la capacità predittiva dei modelli nel riconoscere nuove osservazioni e analizzare la loro generalizzazione su dati non visti.
+#### 3.1.5.3.1. Dataset completo 
 
+Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset originale con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
 
-# ```{r}
-# # Learning
+```{r}
+library(cluster) 
+data("banknote")
+data <- banknote[, -1]
+data_scaled <- scale(data)
 
-# N=nrow(banknote)
-# totIndex=seq(from=1,to=N,by=1)
-# length(totIndex)
-# gamma=0.7
-# trainIndex=sample(totIndex,gamma*N, replace=F )
-# banknote_L<-banknote[trainIndex,]
-# nL=nrow(banknote_L)
-# banknote_T<-banknote[-trainIndex,]
-# nT=nrow(banknote_T)
-# nL
-# nT
-# table(banknote$Status)
-# table(banknote_L$Status)
-# table(banknote_T$Status)
-# #
-# table(banknote$Status)/N*100
-# table(banknote_L$Status)/nL*100
-# table(banknote_T$Status)/nT*100
+set.seed(123)
+km_model <- kmeans(data_scaled, centers = 2, nstart = 25)
+pam_model <- pam(data_scaled, k = 2, nstart = 25)
+hc_model <- hclust(dist(data_scaled, method = "euclidean"), method = "ward.D2")
+diana_model <- diana(data_scaled)
+gmm_model <- Mclust(data_scaled, G = 2)
 
+banknote$kmeans <- km_model$cluster
+banknote$kmedoids <- pam_model$clustering
+banknote$hierarchical_agglomerative <- cutree(hc_model, k = 2)
+banknote$hierarchical_divisive <- cutree(as.hclust(diana_model), k = 2)
+banknote$gmm <- gmm_model$classification
 
-# #
-# # what is the problem?
-# #
-# #install.packages("caret")
-# library(caret) # CreateDataPartition is in the library "caret"
-# # http://topepo.github.io/caret/data-splitting.html
-# #
-# #
-# # Training, Validation and Test sets
-# #
-# gamma_L= 0.7 # proportion of units in the training set
-# set.seed(1500)
-# trainIndex <- createDataPartition(banknote$Status, p = gamma_L, 
-#                                   list = FALSE, 
-#                                   times = 1)
-# banknote_L<-banknote[trainIndex,]
-# nL<-nrow(banknote_L)
-# nL
-# table(banknote_L$Status)
-# table(banknote_L$Status)/nL*100
+head(banknote)
+```
 
-# banknote_T<-banknote[-trainIndex,]
-# nT<-nrow(banknote_T)
-# nT
-# table(banknote_T$Status)
-# table(banknote_T$Status)/nT*100 
+Il codice successivo implementa una funzione per riallineare le assegnazioni dei cluster alle classi reali in modo da rendere i confronti più accurati.
+
+```{r}
+library(caret)
+library(pROC)
+library(mclust)
+
+bestMapping <- function(true, pred) {
+
+  banknote <- banknote %>%
+  mutate(Status_numeric = recode(Status,
+                                 "counterfeit" = 1,
+                                 "genuine" = 2))
 
 
-# set.seed(10000)
-# bankmixt2_L<-mvnormalmixEM(banknote_L[,c(6,7)], k = 2)
-# summary(bankmixt2_L)
-# plot(bankmixt2_L, density = TRUE,  cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5)
+  true <- banknote$Status_numeric
+  true <- as.character(true)
+  pred <- as.character(pred)
+  levels_true <- sort(unique(true))
+  
+  cm1 <- confusionMatrix(factor(pred, levels = levels_true), factor(true, levels = levels_true))
+  acc1 <- cm1$overall["Accuracy"]
+  
+  pred_swap <- ifelse(pred == levels_true[1], levels_true[2], levels_true[1])
+  cm2 <- confusionMatrix(factor(pred_swap, levels = levels_true), factor(true, levels = levels_true))
+  acc2 <- cm2$overall["Accuracy"]
+  
+  if(acc2 > acc1) {
+    return(list(mapped = pred_swap, cm = cm2))
+  } else {
+    return(list(mapped = pred, cm = cm1))
+  }
+}
 
-# bankmixt2_L$class<-apply(bankmixt2_L$posterior,1,which.max)
+```
 
-# table(banknote_L$Status, bankmixt2_L$class)
+Nel blocco successivo, calcoliamo le metriche di valutazione per ciascun algoritmo di clustering. È importante notare che il valore di AUC ha un significato più chiaro per l'algoritmo GMM (Gaussian Mixture Model), poiché questo metodo fornisce direttamente le probabilità a posteriori di appartenenza ai cluster. Per gli altri algoritmi, che operano in modo hard (assegnando ciascun punto a un solo cluster senza una misura di incertezza), il calcolo dell'AUC è stato forzato attraverso:
 
+- Per K-means e K-medoids, è stato definito uno score basato sulla distanza dei punti dal centroide o dal medoide del rispettivo cluster.  
+- Per gli algoritmi gerarchici, non è stato possibile adottare un criterio analogo per costruire uno score continuo, motivo per cui l'AUC non è stato calcolato (indicata come NA nella tabella).  
 
-# alpha=bankmixt2_L$lambda
-# mu1=bankmixt2_L$mu[[1]]
-# mu2=bankmixt2_L$mu[[2]]
-# Sigma1=bankmixt2_L$sigma[[1]]
-# Sigma2=bankmixt2_L$sigma[[2]]
-# alpha
-# mu1
-# Sigma1
-# mu2
-# Sigma2
+```{r}
+# K-means
+ari_kmeans   <- adjustedRandIndex(banknote$Status, banknote$kmeans)
+mapping_kmeans <- bestMapping(banknote$Status, banknote$kmeans)
+cm_kmeans <- mapping_kmeans$cm
+acc_kmeans   <- cm_kmeans$overall["Accuracy"]
+sens_kmeans  <- cm_kmeans$byClass["Sensitivity"]
+spec_kmeans  <- cm_kmeans$byClass["Specificity"]
 
-# library(mvtnorm)
-# mu=rbind(mu1,mu2)
-# mu
-# p=2
-# G=2
-# Sigma=array(0, dim=c(p,p, G))
-# Sigma[,,1]=Sigma1
-# Sigma[,,2]=Sigma2
-# Sigma
+distances_km <- t(apply(data_scaled, 1, function(x) {
+  apply(km_model$centers, 1, function(cent) sqrt(sum((x - cent)^2)))
+}))
+score_kmeans <- distances_km[,2] / rowSums(distances_km)
+roc_obj_kmeans <- roc(banknote$Status, score_kmeans)
+auc_kmeans <- auc(roc_obj_kmeans)
 
-# stat_T_mixt=matrix(0,nT,1+2*G+1)
-# source("mixt2_pg.r")
-# for (i in 1:nT) {
-#   x=banknote_T[i,c(6:7)]
-#   stat_T_mixt[i,]=mixt2_pg(x,alpha,mu, Sigma,G)
-# }
-# table(stat_T_mixt[,6],banknote_T$Status)
-# ```
+# K-medoids
+ari_kmedoids <- adjustedRandIndex(banknote$Status, banknote$kmedoids)
+mapping_kmedoids <- bestMapping(banknote$Status, banknote$kmedoids)
+cm_kmedoids <- mapping_kmedoids$cm
+acc_kmedoids   <- cm_kmedoids$overall["Accuracy"]
+sens_kmedoids  <- cm_kmedoids$byClass["Sensitivity"]
+spec_kmedoids  <- cm_kmedoids$byClass["Specificity"]
 
+medoids <- as.matrix(pam_model$medoids)
+distances_kmed <- t(apply(data_scaled, 1, function(x) {
+  apply(medoids, 1, function(med) sqrt(sum((x - med)^2)))
+}))
+score_kmedoids <- distances_kmed[,2] / rowSums(distances_kmed)
+roc_obj_kmedoids <- roc(banknote$Status, score_kmedoids)
+auc_kmedoids <- auc(roc_obj_kmedoids)
+
+# Gerarchico Agglomerativo
+ari_hierAgg  <- adjustedRandIndex(banknote$Status, banknote$hierarchical_agglomerative)
+mapping_hierAgg <- bestMapping(banknote$Status, banknote$hierarchical_agglomerative)
+cm_hierAgg <- mapping_hierAgg$cm
+acc_hierAgg   <- cm_hierAgg$overall["Accuracy"]
+sens_hierAgg  <- cm_hierAgg$byClass["Sensitivity"]
+spec_hierAgg  <- cm_hierAgg$byClass["Specificity"]
+auc_hierAgg <- NA
+
+# Gerarchico Divisivo
+ari_hierDiv  <- adjustedRandIndex(banknote$Status, banknote$hierarchical_divisive)
+mapping_hierDiv <- bestMapping(banknote$Status, banknote$hierarchical_divisive)
+cm_hierDiv <- mapping_hierDiv$cm
+acc_hierDiv   <- cm_hierDiv$overall["Accuracy"]
+sens_hierDiv  <- cm_hierDiv$byClass["Sensitivity"]
+spec_hierDiv  <- cm_hierDiv$byClass["Specificity"]
+auc_hierDiv <- NA
+
+# GMM
+ari_gmm <- adjustedRandIndex(banknote$Status, banknote$gmm)
+mapping_gmm <- bestMapping(banknote$Status, banknote$gmm)
+cm_gmm <- mapping_gmm$cm
+acc_gmm   <- cm_gmm$overall["Accuracy"]
+sens_gmm  <- cm_gmm$byClass["Sensitivity"]
+spec_gmm  <- cm_gmm$byClass["Specificity"]
+score_gmm <- gmm_model$z[,2]
+roc_obj_gmm <- roc(banknote$Status, score_gmm)
+auc_gmm <- auc(roc_obj_gmm)
+
+```
+Infine, raccogliamo i risultati in un dataframe riassuntivo.
+
+```{r}
+results_df <- data.frame(
+  Metodo       = c("K-means", "K-medoids", "Gerarchico Agglomerativo", "Gerarchico Divisivo", "GMM"),
+  ARI = c(ari_kmeans, ari_kmedoids, ari_hierAgg, ari_hierDiv, ari_gmm),
+  Accuracy     = c(acc_kmeans, acc_kmedoids, acc_hierAgg, acc_hierDiv, acc_gmm),
+  Sensitivity  = c(sens_kmeans, sens_kmedoids, sens_hierAgg, sens_hierDiv, sens_gmm),
+  Specificity  = c(spec_kmeans, spec_kmedoids, spec_hierAgg, spec_hierDiv, spec_gmm),
+  AUC          = c(auc_kmeans, auc_kmedoids, auc_hierAgg, auc_hierDiv, auc_gmm)
+)
+print(results_df)
+```
+
+I risultati mostrano che il metodo **GMM** ha la migliore performance complessiva, con il più alto valore di ARI (0.98) e un'accuratezza del 99.5%. Il clustering gerarchico agglomerativo ha anch'esso buone prestazioni, mentre K-means e K-medoids mostrano una buona affidabilità ma con AUC leggermente inferiori. Analizzando la sensibilità e la specificità, si nota che la sensibilità – ovvero la capacità di identificare correttamente le banconote contraffatte – è generalmente molto alta per tutti gli algoritmi, indicando un'elevata capacità di individuare i falsi. Tuttavia, la specificità, ossia la capacità di riconoscere correttamente le banconote genuine, varia maggiormente tra i metodi. In particolare, K-means mostra una specificità inferiore (0.92) rispetto a K-medoids (0.97) e ai metodi gerarchici (0.98), suggerendo una maggiore tendenza a classificare erroneamente alcune banconote genuine come contraffatte; questo errore è meno grave di classificare una banconota contraffatta come vera.
+
+#### 3.1.5.3.2. Dataset ridotto
+
+Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset ridotto (con le sole variabili 'Diagonal' e 'Bottom') con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
+
+```{r}
+library(cluster) 
+data("banknote")
+data <- banknote[, c("Bottom", "Diagonal")]
+data_scaled <- scale(data)
+
+set.seed(123)
+km_model <- kmeans(data_scaled, centers = 2, nstart = 25)
+pam_model <- pam(data_scaled, k = 2, nstart = 25)
+#TODO: verificare se ward.D2 è il migliore
+hc_model <- hclust(dist(data_scaled, method = "euclidean"), method = "ward.D2")
+diana_model <- diana(data_scaled)
+gmm_model <- Mclust(data_scaled, G = 2)
+
+banknote$kmeans <- km_model$cluster
+banknote$kmedoids <- pam_model$clustering
+banknote$hierarchical_agglomerative <- cutree(hc_model, k = 2)
+banknote$hierarchical_divisive <- cutree(as.hclust(diana_model), k = 2)
+banknote$gmm <- gmm_model$classification
+
+head(banknote)
+```
+
+Nel blocco successivo, calcoliamo le metriche di valutazione come nel caso precedente.
+
+```{r}
+# K-means
+ari_kmeans   <- adjustedRandIndex(banknote$Status, banknote$kmeans)
+mapping_kmeans <- bestMapping(banknote$Status, banknote$kmeans)
+cm_kmeans <- mapping_kmeans$cm
+acc_kmeans   <- cm_kmeans$overall["Accuracy"]
+sens_kmeans  <- cm_kmeans$byClass["Sensitivity"]
+spec_kmeans  <- cm_kmeans$byClass["Specificity"]
+
+distances_km <- t(apply(data_scaled, 1, function(x) {
+  apply(km_model$centers, 1, function(cent) sqrt(sum((x - cent)^2)))
+}))
+score_kmeans <- distances_km[,2] / rowSums(distances_km)
+roc_obj_kmeans <- roc(banknote$Status, score_kmeans)
+auc_kmeans <- auc(roc_obj_kmeans)
+
+# K-medoids
+ari_kmedoids <- adjustedRandIndex(banknote$Status, banknote$kmedoids)
+mapping_kmedoids <- bestMapping(banknote$Status, banknote$kmedoids)
+cm_kmedoids <- mapping_kmedoids$cm
+acc_kmedoids   <- cm_kmedoids$overall["Accuracy"]
+sens_kmedoids  <- cm_kmedoids$byClass["Sensitivity"]
+spec_kmedoids  <- cm_kmedoids$byClass["Specificity"]
+
+medoids <- as.matrix(pam_model$medoids)
+distances_kmed <- t(apply(data_scaled, 1, function(x) {
+  apply(medoids, 1, function(med) sqrt(sum((x - med)^2)))
+}))
+score_kmedoids <- distances_kmed[,2] / rowSums(distances_kmed)
+roc_obj_kmedoids <- roc(banknote$Status, score_kmedoids)
+auc_kmedoids <- auc(roc_obj_kmedoids)
+
+# Gerarchico Agglomerativo
+ari_hierAgg  <- adjustedRandIndex(banknote$Status, banknote$hierarchical_agglomerative)
+mapping_hierAgg <- bestMapping(banknote$Status, banknote$hierarchical_agglomerative)
+cm_hierAgg <- mapping_hierAgg$cm
+acc_hierAgg   <- cm_hierAgg$overall["Accuracy"]
+sens_hierAgg  <- cm_hierAgg$byClass["Sensitivity"]
+spec_hierAgg  <- cm_hierAgg$byClass["Specificity"]
+auc_hierAgg <- NA
+
+# Gerarchico Divisivo
+ari_hierDiv  <- adjustedRandIndex(banknote$Status, banknote$hierarchical_divisive)
+mapping_hierDiv <- bestMapping(banknote$Status, banknote$hierarchical_divisive)
+cm_hierDiv <- mapping_hierDiv$cm
+acc_hierDiv   <- cm_hierDiv$overall["Accuracy"]
+sens_hierDiv  <- cm_hierDiv$byClass["Sensitivity"]
+spec_hierDiv  <- cm_hierDiv$byClass["Specificity"]
+auc_hierDiv <- NA
+
+# GMM
+ari_gmm <- adjustedRandIndex(banknote$Status, banknote$gmm)
+mapping_gmm <- bestMapping(banknote$Status, banknote$gmm)
+cm_gmm <- mapping_gmm$cm
+acc_gmm   <- cm_gmm$overall["Accuracy"]
+sens_gmm  <- cm_gmm$byClass["Sensitivity"]
+spec_gmm  <- cm_gmm$byClass["Specificity"]
+score_gmm <- gmm_model$z[,2]
+roc_obj_gmm <- roc(banknote$Status, score_gmm)
+auc_gmm <- auc(roc_obj_gmm)
+
+```
+
+Infine, raccogliamo i risultati in un dataframe riassuntivo.
+
+```{r}
+results_df <- data.frame(
+  Metodo       = c("K-means", "K-medoids", "Gerarchico Agglomerativo", "Gerarchico Divisivo", "GMM"),
+  ARI = c(ari_kmeans, ari_kmedoids, ari_hierAgg, ari_hierDiv, ari_gmm),
+  Accuracy     = c(acc_kmeans, acc_kmedoids, acc_hierAgg, acc_hierDiv, acc_gmm),
+  Sensitivity  = c(sens_kmeans, sens_kmedoids, sens_hierAgg, sens_hierDiv, sens_gmm),
+  Specificity  = c(spec_kmeans, spec_kmedoids, spec_hierAgg, spec_hierDiv, spec_gmm),
+  AUC          = c(auc_kmeans, auc_kmedoids, auc_hierAgg, auc_hierDiv, auc_gmm)
+)
+print(results_df)
+```
+
+Questa configurazione semplifica il modello senza perdere accuratezza, dimostrando che 'Bottom' e 'Diagonal' sono le variabili chiave per distinguere le classi:  
+- K-means, K-medoids e GMM ottengono ARI 0.98, accuracy 99.5% e AUC ~1, confermando che queste due variabili sono altamente discriminative.  
+- GMM raggiunge sensibilità 100%, identificando tutte le banconote contraffatte, mentre K-means e K-medoids garantiscono specificità 100%, evitando falsi positivi.  
+
+#### 3.1.5.3.3. Dataset trasformato
+
+Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset trasformato (con le variabili trasformate mediante tecnica PCA) con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
+
+```{r}
+data <- banknote_pca[, -1]
+data_scaled <- scale(data)
+
+set.seed(123)
+km_model <- kmeans(data_scaled, centers = 2, nstart = 25)
+pam_model <- pam(data_scaled, k = 2, nstart = 25)
+#TODO: verificare se ward.D2 è il migliore
+hc_model <- hclust(dist(data_scaled, method = "euclidean"), method = "ward.D2")
+diana_model <- diana(data_scaled)
+gmm_model <- Mclust(data_scaled, G = 2)
+
+banknote$kmeans <- km_model$cluster
+banknote$kmedoids <- pam_model$clustering
+banknote$hierarchical_agglomerative <- cutree(hc_model, k = 2)
+banknote$hierarchical_divisive <- cutree(as.hclust(diana_model), k = 2)
+banknote$gmm <- gmm_model$classification
+
+head(banknote)
+```
+
+Nel blocco successivo, calcoliamo le metriche di valutazione come nei casi precedenti.
+
+```{r}
+# K-means
+ari_kmeans   <- adjustedRandIndex(banknote$Status, banknote$kmeans)
+mapping_kmeans <- bestMapping(banknote$Status, banknote$kmeans)
+cm_kmeans <- mapping_kmeans$cm
+acc_kmeans   <- cm_kmeans$overall["Accuracy"]
+sens_kmeans  <- cm_kmeans$byClass["Sensitivity"]
+spec_kmeans  <- cm_kmeans$byClass["Specificity"]
+
+distances_km <- t(apply(data_scaled, 1, function(x) {
+  apply(km_model$centers, 1, function(cent) sqrt(sum((x - cent)^2)))
+}))
+score_kmeans <- distances_km[,2] / rowSums(distances_km)
+roc_obj_kmeans <- roc(banknote$Status, score_kmeans)
+auc_kmeans <- auc(roc_obj_kmeans)
+
+# K-medoids
+ari_kmedoids <- adjustedRandIndex(banknote$Status, banknote$kmedoids)
+mapping_kmedoids <- bestMapping(banknote$Status, banknote$kmedoids)
+cm_kmedoids <- mapping_kmedoids$cm
+acc_kmedoids   <- cm_kmedoids$overall["Accuracy"]
+sens_kmedoids  <- cm_kmedoids$byClass["Sensitivity"]
+spec_kmedoids  <- cm_kmedoids$byClass["Specificity"]
+
+medoids <- as.matrix(pam_model$medoids)
+distances_kmed <- t(apply(data_scaled, 1, function(x) {
+  apply(medoids, 1, function(med) sqrt(sum((x - med)^2)))
+}))
+score_kmedoids <- distances_kmed[,2] / rowSums(distances_kmed)
+roc_obj_kmedoids <- roc(banknote$Status, score_kmedoids)
+auc_kmedoids <- auc(roc_obj_kmedoids)
+
+# Gerarchico Agglomerativo
+ari_hierAgg  <- adjustedRandIndex(banknote$Status, banknote$hierarchical_agglomerative)
+mapping_hierAgg <- bestMapping(banknote$Status, banknote$hierarchical_agglomerative)
+cm_hierAgg <- mapping_hierAgg$cm
+acc_hierAgg   <- cm_hierAgg$overall["Accuracy"]
+sens_hierAgg  <- cm_hierAgg$byClass["Sensitivity"]
+spec_hierAgg  <- cm_hierAgg$byClass["Specificity"]
+auc_hierAgg <- NA
+
+# Gerarchico Divisivo
+ari_hierDiv  <- adjustedRandIndex(banknote$Status, banknote$hierarchical_divisive)
+mapping_hierDiv <- bestMapping(banknote$Status, banknote$hierarchical_divisive)
+cm_hierDiv <- mapping_hierDiv$cm
+acc_hierDiv   <- cm_hierDiv$overall["Accuracy"]
+sens_hierDiv  <- cm_hierDiv$byClass["Sensitivity"]
+spec_hierDiv  <- cm_hierDiv$byClass["Specificity"]
+auc_hierDiv <- NA
+
+# GMM
+ari_gmm <- adjustedRandIndex(banknote$Status, banknote$gmm)
+mapping_gmm <- bestMapping(banknote$Status, banknote$gmm)
+cm_gmm <- mapping_gmm$cm
+acc_gmm   <- cm_gmm$overall["Accuracy"]
+sens_gmm  <- cm_gmm$byClass["Sensitivity"]
+spec_gmm  <- cm_gmm$byClass["Specificity"]
+score_gmm <- gmm_model$z[,2]
+roc_obj_gmm <- roc(banknote$Status, score_gmm)
+auc_gmm <- auc(roc_obj_gmm)
+
+```
+
+Infine, raccogliamo i risultati in un dataframe riassuntivo.
+
+```{r}
+results_df <- data.frame(
+  Metodo       = c("K-means", "K-medoids", "Gerarchico Agglomerativo", "Gerarchico Divisivo", "GMM"),
+  ARI = c(ari_kmeans, ari_kmedoids, ari_hierAgg, ari_hierDiv, ari_gmm),
+  Accuracy     = c(acc_kmeans, acc_kmedoids, acc_hierAgg, acc_hierDiv, acc_gmm),
+  Sensitivity  = c(sens_kmeans, sens_kmedoids, sens_hierAgg, sens_hierDiv, sens_gmm),
+  Specificity  = c(spec_kmeans, spec_kmedoids, spec_hierAgg, spec_hierDiv, spec_gmm),
+  AUC          = c(auc_kmeans, auc_kmedoids, auc_hierAgg, auc_hierDiv, auc_gmm)
+)
+print(results_df)
+```
+
+Rispetto ai risultati con il dataset completo o ridotto, l'uso di solo 3 variabili ottenute con PCA ha ridotto la performance globale, in particolare per K-medoids e Gerarchico Agglomerativo. Sebbene l'accuratezza resti elevata, l'ARI e la specificità mostrano una leggera diminuzione, il che suggerisce che la riduzione delle variabili ha compromesso la capacità di questi algoritmi di catturare la struttura dei dati. In particolare, l'algoritmo Gerarchico Agglomerativo mostra una performance molto più bassa in termini di ARI e accuratezza, indicando che l'algoritmo è più sensibile alla perdita di variabili discriminanti.  
+
+In conclusione, dal punto di vista della misurazione delle performance con tecniche esterne (avendo a disposizione la vera classe delle osservazioni), l'algoritmo **GMM** è risultato il migliore nei tre diversi dataset, anche se, tutto sommato, gli altri algoritmi non hanno ottenuto dei cattivi risultati.
 
 
