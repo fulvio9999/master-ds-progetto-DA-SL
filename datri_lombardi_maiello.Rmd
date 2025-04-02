@@ -884,7 +884,6 @@ fviz_cluster(pam.res,
              ggtheme = theme_classic()
 )
 ```
-
 ## 3.1.4 Misture di Gaussiane
 
 In questa sezione introduciamo l'applicazione del clustering basato su misture di gaussiane, utilizzando la funzione `Mclust` del pacchetto **mclust**. Questo approccio assume che i dati siano generati da una combinazione di distribuzioni gaussiane e, tramite l'algoritmo EM (Expectation-Maximization), stima i parametri di ciascuna componente. Il vantaggio principale di questo metodo è la capacità di modellare cluster con forme ellissoidali, permettendo di gestire anche cluster con sovrapposizioni. Inoltre, `Mclust` effettua una selezione automatica del numero ottimale di cluster e del modello di covarianza (parsimonioso) in base al criterio BIC, fornendo un'indicazione della bontà dell'adattamento e della complessità del modello.  
