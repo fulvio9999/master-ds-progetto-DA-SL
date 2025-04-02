@@ -386,7 +386,9 @@ Può essere computazionalmente costoso per dataset di grandi dimensioni. (quello
 Una volta effettuata una fusione, non è possibile separare i cluster, rendendo l'algoritmo meno flessibile in caso di errori.
 ```
 
-## 3.1.2 K-means
+# 3.2 Clustering Partizionale: K-means e K-medoids (PAM)
+
+## 3.2.1 K-Means
 
 In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-means, dopo aver scalato le variabili numeriche del dataset.
 
@@ -394,6 +396,8 @@ In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-means, dop
 library(factoextra)
 df <- scale(banknote[2:7])
 ```
+
+### 3.2.1.1 Esecuzione dell'algoritmo con tutte le variabili selezionate
 
 Successivamente si determina il numero ottimale di cluster da utilizzare nell'algoritmo, impiegando il metodo Elbow.
 
@@ -449,7 +453,13 @@ fviz_cluster(km.res,
 )
 ```
 
-## 3.1.3 K-medoids
+### 3.2.1.2 Esecuzione dell'algoritmo con solamente le variabili bottom e diagonal
+
+### 3.2.1.3 Esecuzione dell'algoritmo con solamente le variabili scelte tramite la PCA
+
+## 3.2.2 K-Medoids 
+
+### 3.2.2.1 Esecuzione dell'algoritmo sul dataset selezionando tutte le variabili
 
 In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-medoids con k impostato a 2.
 
@@ -484,6 +494,9 @@ fviz_cluster(pam.res,
 )
 ```
 
+### 3.2.2.2 Esecuzione dell'algoritmo con solamente le variabili bottom e diagonal
+
+### 3.2.2.3 Esecuzione dell'algoritmo con solamente le variabili scelte tramite la PCA
 
 ## 3.1.4 Misture di Gaussiane
 
