@@ -526,7 +526,7 @@ final <- eclust(df, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.
 fviz_cluster(final, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
 ```
 
-# ```{r hierarchical agglomerative clustering agnes}
+```{r hierarchical agglomerative clustering agnes}
 # library("cluster")
 
 # res.agnes <- agnes(x = banknote_num,
@@ -536,8 +536,7 @@ fviz_cluster(final, geom = "point", ellipse.type = "norm", palette="jco", ggthem
 # )
 
 # fviz_dend(res.agnes, cex = 0.6, k = 3)
-
-# ```
+```
 
 ## 3.2 Clustering Gerarchico Divisivo
 
