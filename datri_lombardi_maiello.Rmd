@@ -518,6 +518,13 @@ results_ranked <- results_all %>%
 best_overall <- results_ranked %>% arrange(total_rank) %>% head(1)
 print(best_overall)
 ```
+Il clustering migliore con hclust sembrerebbe essere quello con metodo di linkage 'ward.D2' e numero di cluster pari a 2.
+
+```{r hierarchical agglomerative clustering eclust}
+final <- eclust(df, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
+
+fviz_cluster(final, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
+```
 
 # ```{r hierarchical agglomerative clustering agnes}
 # library("cluster")
