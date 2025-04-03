@@ -19,23 +19,21 @@ for (pkg in packages) {
 
 # 1. Introduzione
 
-## Obiettivo del Progetto
-
-Il presente progetto si propone di applicare diverse tecniche di clustering al dataset **banknote** al fine di identificare gruppi omogenei presenti nei dati e confrontare l'efficacia dei vari metodi. L'analisi intende mettere in pratica le metodologie apprese nel modulo di *Data Analysis & Statistical Learning*, in particolare, verranno trattati i seguenti algoritmi di clustering: **Clustering Gerarchico Agglomerativo**, **Clustering Partizionale (K-means e K-medoids)** e **Clustering Model-based (Mixture of Gaussian)**.
-
-TODO: specificare PCA e mixture of regression
-
-Tra diversi dataset consigliati dai docenti, è stato scelto il dataset **banknote**, per un motivo puramente professionale, essendo tutti i membri del team legati professionalmente alle banconote.
-TODO: togliere?
-
+Il presente progetto si propone di applicare diverse tecniche di clustering al dataset **banknote** al fine di identificare gruppi omogenei presenti nei dati e confrontare l'efficacia dei vari metodi. L'analisi intende mettere in pratica le metodologie apprese nel modulo di *Data Analysis & Statistical Learning*, in particolare, verranno trattati i seguenti algoritmi di clustering: **Clustering Gerarchico Agglomerativo e Divisivo**, **Clustering Partizionale (K-means e K-medoids)** e **Clustering Model-based (Mixture of Gaussian)**.  
+ 
+Tali algoritmo sono stati valutati su tre diverse tipologie di dataset:  
+- **Dataset Completo:** utilizzo di tutte le variabili disponibili.  
+- **Dataset Ridotto:** uso esclusivo delle variabili “Bottom” e “Diagonal”, individuate come le più discriminative.  
+- **Dataset Trasformato:** applicazione della PCA per ridurre le variabili a componenti che sintetizzano l’informazione.  
+ 
+Per ciascuna configurazione, sono state valutate le performance dei metodi di clustering mediante metriche interne ed esterne.  
 Il documento è organizzato nei seguenti capitoli:
-
-1.  **Introduzione**: Presentazione del progetto, degli obiettivi e del contesto.
-2.  **Descrizione del Dataset e Analisi Esplorativa**: Esplorazione preliminare dei dati, analisi descrittiva e operazioni di preprocessing.
-3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei metodi di clustering (gerarchico, partizionale e model-based).
-4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).
-5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.
-
+ 
+1.  **Introduzione**: Presentazione del progetto, degli obiettivi e del contesto.  
+2.  **Descrizione del Dataset e Analisi Esplorativa**: Esplorazione preliminare dei dati, analisi descrittiva e operazioni di preprocessing, tra cui la costruzione del dataset trasformato mediante la tecnica PCA.  
+3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei metodi di clustering (gerarchico, partizionale e model-based).  
+4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).  
+5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.  
 
 # 2. Descrizione del Dataset e Analisi Esplorativa
 
@@ -328,7 +326,7 @@ Similmente al passaggio precedente, visualizziamo i contributi delle variabili p
 fviz_contrib(pca_result, choice = "var", axes = 2)
 ```
 
-# 3. Applicazione delle Tecniche di Clustering
+# 3. Clustering gerarchico
 
 ## 3.1 Clustering Gerarchico Agglomerativo
 
@@ -864,11 +862,11 @@ Può essere computazionalmente costoso per dataset di grandi dimensioni. (quello
 Una volta effettuata una fusione, non è possibile separare i cluster, rendendo l'algoritmo meno flessibile in caso di errori.
 ```
 
-# 3.2 Clustering Partizionale: K-means e K-medoids (PAM)
+# 4. Clustering Partizionale
 
-## 3.2.1 K-Means
+## 4.1 K-Means
 
-### 3.2.1.1 Esecuzione dell'algoritmo con tutte le variabili
+### 4.1.1 Esecuzione dell'algoritmo con tutte le variabili
 
 In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-means, dopo aver scalato le variabili numeriche del dataset.
 
@@ -940,7 +938,7 @@ fviz_cluster(km.res,
 
 TODO: aggiungere eclust() (che utilizzare gap statistics per calcolare k)
 
-### 3.2.1.2 Esecuzione dell'algoritmo con solamente le variabili bottom e diagonal
+### 4.1.2 Esecuzione dell'algoritmo con solamente le variabili bottom e diagonal
 
 In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-means, dopo aver scalato le variabili numeriche del dataset.
 
@@ -1010,7 +1008,7 @@ fviz_cluster(km.res,
 )
 ```
 
-### 3.2.1.3 Esecuzione dell'algoritmo con solamente le variabili scelte tramite la PCA
+### 4.1.3 Esecuzione dell'algoritmo con solamente le variabili scelte tramite la PCA
 
 In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-means, dopo aver scalato le variabili numeriche del dataset.
 
@@ -1080,9 +1078,9 @@ fviz_cluster(km.res,
 )
 ```
 
-## 3.2.2 K-Medoids 
+## 4.2 K-Medoids 
 
-### 3.2.2.1 Esecuzione dell'algoritmo sul dataset selezionando tutte le variabili
+### 4.2.1 Esecuzione dell'algoritmo sul dataset selezionando tutte le variabili
 
 In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-medoids con k impostato a 2.
 
@@ -1117,7 +1115,7 @@ fviz_cluster(pam.res,
 )
 ```
 
-### 3.2.2.2 Esecuzione dell'algoritmo con solamente le variabili bottom e diagonal
+### 4.2.2 Esecuzione dell'algoritmo con solamente le variabili bottom e diagonal
 
 ```{r}
 df_ridotto <- df[, c("Bottom", "Diagonal")]
@@ -1146,7 +1144,7 @@ fviz_cluster(pam.res,
 )
 ```
 
-### 3.2.2.3 Esecuzione dell'algoritmo con solamente le variabili scelte tramite la PCA
+### 4.2.3 Esecuzione dell'algoritmo con solamente le variabili scelte tramite la PCA
 
 ```{r}
 df_pca <- scale(banknote_pca[, -1])
@@ -1175,7 +1173,7 @@ fviz_cluster(pam.res,
 )
 ```
 
-## 3.1.4 Misture di Gaussiane
+# 5. Clustering Model-based: Mixture of Gaussian
 
 In questa sezione introduciamo l'applicazione del clustering basato su misture di gaussiane, utilizzando la funzione `Mclust` del pacchetto **mclust**. Questo approccio assume che i dati siano generati da una combinazione di distribuzioni gaussiane e, tramite l'algoritmo EM (Expectation-Maximization), stima i parametri di ciascuna componente. Il vantaggio principale di questo metodo è la capacità di modellare cluster con forme ellissoidali, permettendo di gestire anche cluster con sovrapposizioni. Inoltre, `Mclust` effettua una selezione automatica del numero ottimale di cluster e del modello di covarianza (parsimonioso) in base al criterio BIC, fornendo un'indicazione della bontà dell'adattamento e della complessità del modello.  
 
@@ -1258,11 +1256,11 @@ summary(gmm_result3)
 ```
 
 Anche in questo caso, i valori di BIC e ICL sono concordi: per un numero di cluster pari a 3 si ottiene un BIC di circa -1630 e un ICL di -1657, mentre per 2 cluster il BIC risulta attorno a -1614 e l'ICL a -1616. Questo dimostra che anche l'ICL suggerisce che il modello ottimale è quello con 2 cluster.  
-## 3.1.5. Validazione e visualizzazione dei risultati
+# 6. Validazione e visualizzazione dei risultati
 
 TODO: inserire commento introduttivo
 
-### 3.1.5.3. Validazione con la classe reale
+## 6.3. Validazione con la classe reale
 
 In questa sezione analizzeremo la qualità dei diversi metodi di clustering applicati al dataset banknote, fissando il numero di cluster pari al numero di classi reali, ovvero 2. Questo approccio ci permette di utilizzare tecniche di validazione esterne, dato che disponiamo delle etichette reali delle osservazioni (variabile 'Status').  
 Per valutare l'efficacia dei cluster identificati, utilizzeremo diverse metriche, tra cui:  
@@ -1273,7 +1271,7 @@ Verranno valutate le misure di validazione al variare del numero di variabili ut
 - **Dataset ridotto**: utilizzo esclusivo delle variabili 'Diagonal' e 'Bottom', identificate come le più discriminative.
 - **Dataset trasformato**: utilizzo delle variabili ottenute tramite PCA.
 
-#### 3.1.5.3.1. Dataset completo 
+### 6.3.1. Dataset completo 
 
 Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset originale con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
 
@@ -1418,7 +1416,7 @@ print(results_df)
 
 I risultati mostrano che il metodo **GMM** ha la migliore performance complessiva, con il più alto valore di ARI (0.98) e un'accuratezza del 99.5%. Il clustering gerarchico agglomerativo ha anch'esso buone prestazioni, mentre K-means e K-medoids mostrano una buona affidabilità ma con AUC leggermente inferiori. Analizzando la sensibilità e la specificità, si nota che la sensibilità – ovvero la capacità di identificare correttamente le banconote contraffatte – è generalmente molto alta per tutti gli algoritmi, indicando un'elevata capacità di individuare i falsi. Tuttavia, la specificità, ossia la capacità di riconoscere correttamente le banconote genuine, varia maggiormente tra i metodi. In particolare, K-means mostra una specificità inferiore (0.92) rispetto a K-medoids (0.97) e ai metodi gerarchici (0.98), suggerendo una maggiore tendenza a classificare erroneamente alcune banconote genuine come contraffatte; questo errore è meno grave di classificare una banconota contraffatta come vera.
 
-#### 3.1.5.3.2. Dataset ridotto
+### 6.3.2. Dataset ridotto
 
 Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset ridotto (con le sole variabili 'Diagonal' e 'Bottom') con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
 
@@ -1528,7 +1526,7 @@ Questa configurazione semplifica il modello senza perdere accuratezza, dimostran
 - K-means, K-medoids e GMM ottengono ARI 0.98, accuracy 99.5% e AUC ~1, confermando che queste due variabili sono altamente discriminative.  
 - GMM raggiunge sensibilità 100%, identificando tutte le banconote contraffatte, mentre K-means e K-medoids garantiscono specificità 100%, evitando falsi positivi.  
 
-#### 3.1.5.3.3. Dataset trasformato
+### 6.3.3. Dataset trasformato
 
 Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset trasformato (con le variabili trasformate mediante tecnica PCA) con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
 
@@ -1635,5 +1633,17 @@ print(results_df)
 Rispetto ai risultati con il dataset completo o ridotto, l'uso di solo 3 variabili ottenute con PCA ha ridotto la performance globale, in particolare per K-medoids e Gerarchico Agglomerativo. Sebbene l'accuratezza resti elevata, l'ARI e la specificità mostrano una leggera diminuzione, il che suggerisce che la riduzione delle variabili ha compromesso la capacità di questi algoritmi di catturare la struttura dei dati. In particolare, l'algoritmo Gerarchico Agglomerativo mostra una performance molto più bassa in termini di ARI e accuratezza, indicando che l'algoritmo è più sensibile alla perdita di variabili discriminanti.  
 
 In conclusione, dal punto di vista della misurazione delle performance con tecniche esterne (avendo a disposizione la vera classe delle osservazioni), l'algoritmo **GMM** è risultato il migliore nei tre diversi dataset, anche se, tutto sommato, gli altri algoritmi non hanno ottenuto dei cattivi risultati.
+
+# 7. Conclusioni
+
+Questo progetto, realizzato a scopo didattico, ha analizzato diverse tecniche di clustering applicate al dataset *banknote*, un dataset semplice con due classi ben distinte. Inizialmente sono state utilizzate misure interne – quali il BIC, l'indice silhouette e altre metriche di compattezza – per valutare la qualità dei cluster senza ricorrere alle etichette reali. Successivamente, l'analisi è stata estesa con misure esterne (Adjusted Rand Index, accuratezza, sensibilità, specificità e AUC) per confrontare le assegnazioni dei cluster con la vera classe delle osservazioni.
+
+I risultati mostrano che, quando si utilizzano tutte le variabili o solo quelle discriminanti (Bottom e Diagonal), algoritmi come GMM e, in alcuni casi, K-means e K-medoids raggiungono prestazioni eccellenti, con ARI e AUC quasi perfetti. Al contrario, i metodi gerarchici, in particolare quello agglomerativo, hanno ottenuto risultati leggermente inferiori, anche se in alcune configurazioni il clustering gerarchico divisivo si è dimostrato competitivo. L'approccio GMM risulta particolarmente robusto, grazie alla possibilità di estrarre score continui tramite le probabilità a posteriori.
+
+Questi risultati, sia interni che esterni, evidenziano come una corretta selezione o trasformazione delle variabili (ad es. tramite PCA) possa semplificare il modello senza compromettere la capacità di distinguere correttamente le banconote genuine da quelle contraffatte.
+
+Per il futuro, un possibile sviluppo potrebbe essere l'applicazione di questi metodi a dataset più complessi, nonché l'ottimizzazione degli score per metodi hard. Inoltre, integrare tecniche di soft clustering o combinare il clustering con approcci supervisionati potrebbe migliorare ulteriormente la generalizzazione e la robustezza dei modelli, offrendo una visione più completa delle performance in contesti reali.
+
+
 
 
