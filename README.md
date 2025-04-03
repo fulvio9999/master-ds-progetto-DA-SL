@@ -82,14 +82,6 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibili dopo 
             - Per ogni ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibili dopo PCA"]:
                Calcolare ciascuna di queste misure: [Adjusted Rand index, Meila, Accuracy, Recall, Specifity, Confusion Matrix, AUC]
 
-### 4. Applicazione delle tecniche di mixture of regression
-
-#### 4.1. Mixture of regression senza variabili concomitanti
-
-#### 4.2. Mixture of regression con variabili concomitanti
-
-#### 4.3. Risultati
-
 ### 5. Conclusioni e Sviluppi Futuri
 
 
