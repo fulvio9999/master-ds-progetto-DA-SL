@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, fig.align = "center")
 
 packages <- c("mclust", "reshape2", "ggplot2", "GGally", "dplyr", "clustertend", "cluster", "FNN", "FactoMineR", "factoextra", "caret", "pheatmap", "clusterCrit", "NbClust", "fpc", "scatterplot3d")
 
@@ -215,14 +215,14 @@ Un valore di Hopkins pari a 0.2519264, essendo inferiore a 0.5, indica una tende
 ### Visual Assessment of cluster Tendency (VAT)
 L'algoritmo VAT produce una matrice di dissimilarità ordinata, ottenuta riorganizzando le righe e le colonne della matrice delle distanze per evidenziare eventuali blocchi di punti “ravvicinati” (ossia potenziali cluster). Visualizziamo la matrice con l'intento di verificare se si formano lungo la diagonale secondaria del grafico, dei blocchi rossi che rappresentano regioni di osservazioni che condividono una forte similarità.
 
-```{r}
+```{r fig.width = 15, fig.height = 7}
 library("factoextra")
 library(gridExtra)
 
 p1 <- fviz_dist(dist(banknote), show_labels = FALSE) + labs(title = "Banknote data")
 p2 <- fviz_dist(dist(random_df), show_labels = FALSE) + labs(title = "Random data")
 
-grid.arrange(p1, p2, ncol = 2)
+grid.arrange(p1, p2, ncol = 2, widths = c(6, 6))
 ```
 Nei grafici VAT il rosso indica alta similarità (ossia bassa dissimilarità), mentre il blu indica bassa similarità (ossia alta dissimilarità).
 Relativamente al grafico del dataset banknote, notiamo che lungo la diagonale sono presenti regioni rosse che indicano dati simili tra loro, suggerendo la presenza di cluster.
