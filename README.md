@@ -21,7 +21,7 @@ Regression.
     * Statistical method: Hopkins statistics
     * Visual method: VAT algorithm
 - [x] Calcolo della PCA da d a 2 variabili
-- [ ] Commento che d'ora in avanti si faranno per ogni algoritmo, 3 diverse prove:
+- [x] Commento che d'ora in avanti si faranno per ogni algoritmo, 3 diverse prove:
     - Tutte le variabili
     - Solo le variaibli diagonal e Bottom
     - Due variabili post PCA
@@ -31,7 +31,7 @@ Regression.
 #### 3.1. Clustering Gerarchico Agglomerativo
 
 For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo PCA"]:
-TODO: ["variaibli diagonal e Bottom", "variaibli dopo PCA"]:
+
 
 - [x] Eseguire l'algoritmo
 - [x] Determinare K:
@@ -40,7 +40,7 @@ TODO: ["variaibli diagonal e Bottom", "variaibli dopo PCA"]:
     * NbClust --> Calcola su diversi indici Tra cui quelli sopra
 - [x] Goodness dei risultati (cluster.stats() calcola diversi indici)
     * Intenal: silhouette width, Dunn index
-- [ ] Commentare i risultati
+- [ ] Commentare i risultati;  TODO: ["variaibli diagonal e Bottom", "variaibli dopo PCA"]
 
 #### 3.2. Clustering Partizionale: K-means e K-medoids (PAM)
 
