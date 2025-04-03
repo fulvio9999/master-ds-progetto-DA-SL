@@ -40,7 +40,7 @@ For all: ["Tutte le variabili", "variaibli diagonal e Bottom", "variaibli dopo P
     * NbClust --> Calcola su diversi indici Tra cui quelli sopra
 - [x] Goodness dei risultati (cluster.stats() calcola diversi indici)
     * Intenal: silhouette width, Dunn index
-- [ ] Commentare i risultati;  TODO: ["variaibli diagonal e Bottom", "variaibli dopo PCA"]
+- [x] Commentare i risultati;
 
 #### 3.2. Clustering Partizionale: K-means e K-medoids (PAM)
 

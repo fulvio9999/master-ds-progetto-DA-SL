@@ -83,11 +83,12 @@ summary(banknote)
 ```
 Notiamo che la colonna 'Status' è perfettamente bilanciata.
 
-# Controllo valori mancanti
+Controlliamo se ci sono valori mancanti nelle colonne.
+
 ```{r missing values}
 colSums(is.na(banknote))
 ```
-Non c'è nessun valore mancante nelle colonne.
+Come possiamo vedere nessuna colonna presenta valori mancanti.
 
 ## Analisi Esplorativa dei Dati (EDA)
 Questa sezione fornisce una panoramica iniziale del dataset banknote, evidenziando la struttura, le principali statistiche descrittive e le relazioni tra le variabili.
@@ -438,8 +439,10 @@ fviz_dend(hclust_clustering, k = 3,
 ```
 La maggior parte dei dati è stata assegnata ai primi due cluster, mentre il terzo cluster contiene un numero significativamente minore di osservazioni. Questo potrebbe suggerire che il cluster 3 rappresenta un gruppo più piccolo, con caratteristiche potenzialmente diverse o più specifiche rispetto ai gruppi più grandi.
 
+Vediamo i risultati di clustering nello spazio originale, tramite la matrice di scatterplot a coppie con i punti colorati in base ai cluster di appartenenza.
 ```{r hierarchical agglomerative clustering hclust pairs}
-pairs(df, gap=0, pch=cluster_cut, col=c("orange", "green", "blue")[cluster_cut])
+ggpairs(df, aes(color = as.factor(cluster_cut))) +
+  ggtitle("Matrice Pairwise Scatterplot con Cluster")
 ```
 
 #### Valutazione
@@ -577,6 +580,7 @@ fviz_cluster(final, geom = "point", ellipse.type = "norm", palette="jco", ggthem
 ```
 
 ### Clustering con PCA
+Vediamo come cambia il clustering se invece che considerare tutte le variabili del dataset, consideriamo solo le tre componenti principali trovate prima.
 
 ```{r hierarchical agglomerative clustering pca best}
 
@@ -597,6 +601,17 @@ results_ranked_pca <- results_all_pca %>%
 best_overall_pca <- results_ranked_pca %>% arrange(total_rank) %>% head(1)
 print(best_overall_pca)
 ```
+
+Il risultato indica che, applicando il clustering agglomerativo con numero di cluster pari a 2 e metodo di linkage "average" al dataset ridotto a tre componenti principali, otteniamo la combinazione migliore in base ai 4 indici di valutazione, anche se i risultati presentano alcune peculiarità.
+Rispetto alle altre combinazioni testate, la silhouette e la VI hanno ottenuto i migliori punteggi (rank 1), il Corrected Rand è quasi il migliore (rank 2), invece l'indice Dunn, in questa combinazione, non performa bene rispetto ad altre configurazioni testate (rank 27).
+Rispetto al clustering agglomerativo applicato su tutte le variabili del dataset il clustering sul dataset ridotto mostra:
+- Un indice silhouette leggermente migliore (0.431) rispetto a quello su tutte le variabili (0.375), suggerendo che i punti sono, mediamente, meglio raggruppati all'interno dei cluster nel caso PCA.
+- Il clustering su tutte le variabili ha un indice Dunn migliore (0.211 vs 0.106), il che significa che la separazione minima tra cluster è maggiore e i cluster risultano più distinti.
+- Entrambe le soluzioni mostrano valori molto alti del Corrected Rand e bassi del VI, ma la soluzione con tutte le variabili è leggermente superiore (0.960 vs 0.902 e 0.098 vs 0.200), indicando una migliore aderenza ad una struttura di riferimento o una maggiore stabilità del clustering.
+
+Mentre l'approccio con PCA (riduzione a 3 componenti) offre cluster con una buona compattezza (indice silhouette migliore), il clustering basato su tutte le variabili, utilizzando il metodo ward.D2, risulta complessivamente superiore per quanto riguarda la separazione tra cluster e la corrispondenza con una struttura di riferimento (migliori valori di Dunn, Corrected Rand e VI).
+
+Vediamo graficamente come sono separati i due cluster.
 ```{r hierarchical agglomerative clustering pca eclust}
 library(scatterplot3d)
 
@@ -613,7 +628,9 @@ scatterplot3d(banknote_pca_num,
 legend("topright", legend = unique(clusters), col = unique(clusters), pch = 19, title = "Cluster")
 
 ```
+
 ### Clustering con solo le variabili Bottom e Diagonal
+Vediamo infine come cambia il clustering considerando solo le variabili 'Bottom' e 'Diagonal' che sembravano suddividere meglio i dati in gruppi.
 
 ```{r hierarchical agglomerative clustering bottom e diagonal}
 
@@ -636,7 +653,12 @@ results_ranked_bd <- results_all_bd %>%
 best_overall_bd <- results_ranked_bd %>% arrange(total_rank) %>% head(1)
 print(best_overall_bd)
 ```
+In questo caso la combinazione migliore è data da metodo di linkage 'ward.D2' e numero cluster pari a 2. Notiamo che in questo caso che il valore Silhouette 0.6245 è più alto rispetto agli altri due approcci (0.431 per PCA e 0.375 usando tutte le variabili), il che indica che i punti all'interno dei cluster sono ben raggruppati e distinti l'uno dall'altro.
+Ciò supporta l'idea iniziale che queste due variabili siano in grado di dividere bene il dataset.
+Il Dunn index risulta più basso rispetto a quello ottenuto con tutte le variabili (0.211) o con la PCA (0.106), il che potrebbe significare che alcuni cluster risultano più vicini o con una certa dispersione interna.
+Il Corrected Rand 0.9602 rimane molto elevato, segnalando una forte coerenza con la struttura di riferimento attesa. L'indice VI è basso, confermando una buona similarità o una discreta aderenza a una struttura di riferimento.
 
+Visualizziamo come il dataset è stato diviso in cluster.
 ```{r hierarchical agglomerative clustering bottom e diagonal eclust}
 final_bd <- eclust(banknote_bd_scaled, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
 
@@ -644,21 +666,151 @@ fviz_cluster(final_bd, geom = "point", ellipse.type = "norm", palette="jco", ggt
 ```
 
 ## 3.2 Clustering Gerarchico Divisivo
+Il clustering divisivo è una tecnica gerarchica "top-down" che parte da un unico cluster contenente l'intero dataset e procede a suddividerlo progressivamente in cluster più piccoli. A differenza del clustering agglomerativo, che inizia con ciascun punto come cluster individuale e li unisce gradualmente, il metodo divisivo si concentra sulla separazione iterativa dei dati in gruppi distinti.
+Ad ogni suddivisione, si cerca di massimizzare la differenza (o la distanza) tra i cluster risultanti e minimizzare la varianza all'interno di ciascun cluster.
+Il risultato finale è una struttura ad albero (il dendrogramma) che rappresenta le varie divisioni e il livello di dettaglio raggiunto, offrendo una visione della struttura gerarchica dei dati.
+
+### Clustering Gerarchico Divisivo con tutte le variabili
+Applichiamo il clusering gerarchico divisivo sul nostro dataset Banknote con tutte le variabili.
+Utilizziamo l'algoritmo DIANA (DIvisive Analysis Clustering) sul dataset standardizzato (scaling) in precedenza e distanza euclidea per calcolare la distanza tra le osservazioni.
+La funzione 'eclust', se non si specifica il parametro k, calcola automaticamente la statistica del gap per stimare il numero ottimale di cluster.
+Fornisce inoltre informazioni sulla silhouette per tutti i metodi di partizionamento e per il clustering gerarchico.
 
 ```{r hierarchical divisive clustering diana}
-res.diana <- diana(x = banknote_num,
-                   stand = TRUE,
-                   metric = "euclidean"
-)
+diana_clustering <- eclust(df, "diana", stand = FALSE, hc_metric = "euclidean")
 
-diana_clustering <- eclust(df, "diana", k = 2, hc_metric = "euclidean", graph = FALSE)
-
-fviz_dend(res.diana, cex = 0.6, show_labels = FALSE, as.ggplot = TRUE)
+fviz_dend(diana_clustering, cex = 0.6, show_labels = FALSE, as.ggplot = TRUE)
 ```
 
-```
-###Vantaggi e Svantaggi del Clustering Gerarchico
+Osserviamo che la funzione eclust ha stabilito che il numero ottimale di cluster è 3.
+Proviamo a calcolare la migliore combinazione di numero di cluster con una leggera modifica del codice visto prima.
 
+```{r hierarchical divisive clustering diana all}
+
+evaluate_diana_clustering <- function(df, distanze, status, min_k = 2, max_k = 10) {
+    results_all <- data.frame(  k = numeric(),
+                                Silhouette = numeric(),
+                                Dunn = numeric(),
+                                Corrected_Rand = numeric(),
+                                VI = numeric(),
+                                stringsAsFactors = FALSE)
+    
+    diana_obj <- diana(distanze)
+
+    hclust_obj <- as.hclust(diana_obj)
+    
+    for(k in min_k:max_k) {
+        cluster_cut <- cutree(hclust_obj, k = k)
+        
+        sil <- silhouette(cluster_cut, distanze)
+        avg_sil <- mean(sil[, 3])
+
+        dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
+        
+        clust_stats <- cluster.stats(distanze, status, cluster_cut)
+        corrected_rand <- clust_stats$corrected.rand
+        vi_val <- clust_stats$vi
+        
+        results_all <- rbind(results_all, data.frame(k = k,
+                                                     Silhouette = avg_sil,
+                                                     Dunn = dunn_index,
+                                                     Corrected_Rand = corrected_rand,
+                                                     VI = vi_val,
+                                                     stringsAsFactors = FALSE))
+    }
+    return(results_all)
+}
+
+results_all_diana <- evaluate_diana_clustering(df, distanze, status)
+
+results_all_diana <- results_all_diana %>%
+  mutate(
+    rank_sil = rank(-Silhouette, ties.method = "min"),
+    rank_dunn = rank(-Dunn, ties.method = "min"),
+    rank_corrected_rand = rank(-Corrected_Rand, ties.method = "min"),
+    rank_vi = rank(VI, ties.method = "min"),
+    
+    total_rank = rank_sil + rank_dunn + rank_corrected_rand + rank_vi
+  )
+
+best_overall_diana <- results_all_diana %>% arrange(total_rank) %>% head(1)
+print(best_overall_diana)
+```
+
+Anche in questo caso il risultato suggerisce che il miglior numero di cluster del il dataset è 2.
+I ranghi di Silhouette, Dunn, Corrected Rand e VI sono tutti pari a 1, il che indica che DIANA con k = 2 ha ottenuto i migliori risultati per queste metriche rispetto agli altri valori di k esplorati.
+Con un clustering gerarchico divisivo su tutte le variabili numeriche del dataset, con numero di cluster pari a 2 otteniamo:
+- Silhouette pari a 0.3723. Valore moderato, indica una separazione discreta tra i cluster.
+- Indice di Dunn pari a 0.18198. Valore piuttosto basso, suggerisce che la separazione tra i cluster non è eccezionale.
+- Corrected Rand Index pari a 0.9406. Valore alto, indica una buona concordanza con la partizione ideale.
+- Variational Information (VI) pari a 0.1541. Valore basso, suggerisce una buona corrispondenza con la partizione di riferimento.
+
+### Clustering Gerarchico Divisivo con le componenti principali
+Applichiamo il clusering gerarchico divisivo sul nostro dataset considerando solo le 3 componenti principali.
+
+```{r hierarchical divisive clustering diana pca}
+results_pca_diana <- evaluate_diana_clustering(banknote_pca_num, dist(banknote_pca_num), status)
+
+results_pca_diana <- results_pca_diana %>%
+  mutate(
+    rank_sil = rank(-Silhouette, ties.method = "min"),
+    rank_dunn = rank(-Dunn, ties.method = "min"),
+    rank_corrected_rand = rank(-Corrected_Rand, ties.method = "min"),
+    rank_vi = rank(VI, ties.method = "min"),
+    
+    total_rank = rank_sil + rank_dunn + rank_corrected_rand + rank_vi
+  )
+
+best_pca_diana <- results_pca_diana %>% arrange(total_rank) %>% head(1)
+print(best_pca_diana)
+```
+Ancora una volta viene indicato 2 come numero ideali di cluster.
+
+I risultati ottenuti applicando PCA prima di eseguire il clustering DIANA per k = 2 sono i seguenti:
+
+- Silhouette pari a 0.4394, leggermente migliore rispetto a quando non è stata applicata la PCA, suggerendo una separazione più chiara tra i cluster.
+
+- Indice di Dunn pari a 0.0933, piuttosto basso, indicante una separazione limitata tra i cluster.
+
+- Corrected Rand Index pari a 0.8456, buona concordanza con la partizione ideale, ma inferiore a quando non si applica la PCA.
+
+- Variational Information (VI) pari a 0.2820, un po' più alta rispetto al caso senza PCA, indicando una leggera differenza rispetto alla partizione di riferimento.
+
+L'applicazione della PCA prima del clustering DIANA porta a un miglioramento nella separazione dei cluster, come evidenziato dal valore di Silhouette più alto (0.4394 rispetto a 0.3723), ma l'indice di Dunn rimane basso, suggerendo che i cluster non sono completamente separati. Il Corrected Rand Index e il Variational Information (VI) mostrano una discreta corrispondenza con una partizione ideale, ma comunque inferiore rispetto ai risultati ottenuti senza PCA.
+
+### Clustering Gerarchico Divisivo con dataset ridotto
+Applichiamo il clusering gerarchico divisivo sul nostro dataset ridotto alle sole due variabili 'Bottom' e 'Diagonal'.
+
+```{r hierarchical divisive clustering diana bd}
+results_bd_diana <- evaluate_diana_clustering(banknote_bd_scaled, dist(banknote_bd_scaled), status)
+
+results_bd_diana <- results_bd_diana %>%
+  mutate(
+    rank_sil = rank(-Silhouette, ties.method = "min"),
+    rank_dunn = rank(-Dunn, ties.method = "min"),
+    rank_corrected_rand = rank(-Corrected_Rand, ties.method = "min"),
+    rank_vi = rank(VI, ties.method = "min"),
+    
+    total_rank = rank_sil + rank_dunn + rank_corrected_rand + rank_vi
+  )
+
+best_bd_diana <- results_bd_diana %>% arrange(total_rank) %>% head(1)
+print(best_bd_diana)
+```
+I risultati ottenuti applicando DIANA al dataset composto solo dalle variabili 'Bottom' e 'Diagonal' per k = 2 sono i seguenti:
+
+- Silhouette pari a 0.6241, valore buono, indica una separazione più marcata tra i cluster rispetto ai precedenti risultati.
+
+- Indice di Dunn pari a 0.07897, valore ancora piuttosto basso, suggerisce che la separazione tra i cluster non è ottimale, ma non peggiora rispetto ai casi precedenti.
+
+- Corrected Rand Index pari a 0.9406, valore molto alto, indica che il clustering ottenuto con DIANA è molto simile alla partizione ideale.
+
+- Variational Information (VI) pari a 0.1541, valore basso, indica una buona corrispondenza con la partizione di riferimento.
+
+Applicare DIANA solo sulle variabili bottom e diagonal migliora il risultato della separazione dei cluster, come evidenziato dal valore più alto di Silhouette (0.6241). Tuttavia, l'indice di Dunn rimane basso, suggerendo che la separazione tra i cluster non è ancora ideale. La concordanza con la partizione ideale (Corrected Rand Index) è molto alta, il che indica che il clustering rispecchia bene una divisione naturale del dataset.
+
+### Vantaggi e Svantaggi del Clustering Gerarchico
+TODO
 #### Vantaggi:
 
 ```
@@ -670,7 +822,7 @@ Adatto a dataset di piccole e medie dimensioni.
 ```
 
 #### Svantaggi:
-
+TODO
 ```
 Sensibile alla scelta della misura di distanza e del metodo di linkage.
 
