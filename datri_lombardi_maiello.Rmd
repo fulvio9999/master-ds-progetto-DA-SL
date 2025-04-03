@@ -745,6 +745,14 @@ Con un clustering gerarchico divisivo su tutte le variabili numeriche del datase
 - Corrected Rand Index pari a 0.9406. Valore alto, indica una buona concordanza con la partizione ideale.
 - Variational Information (VI) pari a 0.1541. Valore basso, suggerisce una buona corrispondenza con la partizione di riferimento.
 
+Visualizziamo come il dataset è stato diviso in cluster.
+```{r hierarchical divisive clustering diana plot all}
+final_diana_clustering <- eclust(df, "diana", stand = FALSE, k = 2, hc_metric = "euclidean")
+
+fviz_cluster(final_diana_clustering, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
+```
+
+
 ### Clustering Gerarchico Divisivo con le componenti principali
 Applichiamo il clusering gerarchico divisivo sul nostro dataset considerando solo le 3 componenti principali.
 
@@ -778,6 +786,22 @@ I risultati ottenuti applicando PCA prima di eseguire il clustering DIANA per k 
 
 L'applicazione della PCA prima del clustering DIANA porta a un miglioramento nella separazione dei cluster, come evidenziato dal valore di Silhouette più alto (0.4394 rispetto a 0.3723), ma l'indice di Dunn rimane basso, suggerendo che i cluster non sono completamente separati. Il Corrected Rand Index e il Variational Information (VI) mostrano una discreta corrispondenza con una partizione ideale, ma comunque inferiore rispetto ai risultati ottenuti senza PCA.
 
+Visualizziamo come il dataset è stato diviso in cluster.
+```{r hierarchical divisive clustering diana plot pca}
+final_diana_clustering_pca <- eclust(banknote_pca_num, "diana", stand = FALSE, k = 2, hc_metric = "euclidean")
+
+clusters_diana <- final_diana_clustering_pca$cluster
+
+scatterplot3d(banknote_pca_num,
+              color = clusters_diana,
+              pch = 19,
+              main = "DIANA Clustering su PCA (PC1, PC2, PC3)",
+              xlab = "PC1", ylab = "PC2", zlab = "PC3")
+
+legend("topright", legend = unique(clusters_diana), col = unique(clusters_diana), pch = 19, title = "Cluster")
+```
+
+
 ### Clustering Gerarchico Divisivo con dataset ridotto
 Applichiamo il clusering gerarchico divisivo sul nostro dataset ridotto alle sole due variabili 'Bottom' e 'Diagonal'.
 
@@ -808,6 +832,15 @@ I risultati ottenuti applicando DIANA al dataset composto solo dalle variabili '
 - Variational Information (VI) pari a 0.1541, valore basso, indica una buona corrispondenza con la partizione di riferimento.
 
 Applicare DIANA solo sulle variabili bottom e diagonal migliora il risultato della separazione dei cluster, come evidenziato dal valore più alto di Silhouette (0.6241). Tuttavia, l'indice di Dunn rimane basso, suggerendo che la separazione tra i cluster non è ancora ideale. La concordanza con la partizione ideale (Corrected Rand Index) è molto alta, il che indica che il clustering rispecchia bene una divisione naturale del dataset.
+
+
+Visualizziamo come il dataset è stato diviso in cluster.
+```{r hierarchical divisive clustering diana plot bd}
+final_diana_clustering_bd <- eclust(banknote_bd_scaled, "diana", stand = FALSE, k = 2, hc_metric = "euclidean")
+
+fviz_cluster(final_diana_clustering_bd, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
+```
+
 
 ### Vantaggi e Svantaggi del Clustering Gerarchico
 TODO
