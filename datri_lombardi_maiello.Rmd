@@ -24,6 +24,10 @@ for (pkg in packages) {
 
 ```
 
+---
+
+\newpage
+
 # 1. Introduzione
 
 Il presente progetto si propone di applicare diverse tecniche di clustering al dataset **banknote** al fine di identificare gruppi omogenei presenti nei dati e confrontare l'efficacia dei vari metodi. L'analisi intende mettere in pratica le metodologie apprese nel modulo di *Data Analysis & Statistical Learning*, in particolare, verranno trattati i seguenti algoritmi di clustering: **Clustering Gerarchico Agglomerativo e Divisivo**, **Clustering Partizionale (K-means e K-medoids)** e **Clustering Model-based (Mixture of Gaussian)**.  
@@ -41,6 +45,10 @@ Il documento è organizzato nei seguenti capitoli:
 3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei metodi di clustering (gerarchico, partizionale e model-based).
 4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).
 5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.
+
+---
+
+\newpage
 
 # 2. Descrizione e analisi del dataset
 
@@ -278,6 +286,10 @@ fviz_contrib(pca_result, choice = "var", axes = 2)
 ```
 Notiamo che la variabile `Length` ha contribuito più del 60% alla seconda componente principale.
 
+---
+
+\newpage
+
 # 3. Clustering gerarchico
 
 ## 3.1 Clustering Gerarchico Agglomerativo
@@ -383,7 +395,7 @@ Valutiamo ora la qualità dei risultati del nostro algoritmo di clustering media
 
 Iniziamo con la metrica della silhouette media (calcolata come la media di s(i) su tutte le osservazioni), che fornisce un'indicazione complessiva della qualità del clustering: si auspica un valore il più vicino ad 1 possibile.
 ```{r hierarchical agglomerative clustering hclust cut sil}
-sil <- silhouette(clusters, distanze)
+sil <- silhouette(cluster_cut, distanze)
 fviz_silhouette(sil, palette = "jco", ggtheme = theme_classic())
 ```
 Un valore di 0.37 suggerisce che la struttura dei cluster non è particolarmente forte: c'è una separazione moderata, ma c'è anche una certa sovrapposizione tra i cluster.
@@ -394,7 +406,7 @@ Pertanto l'indice di Dunn deve essere massimizzato.
 
 ```{r hierarchical agglomerative clustering hclust dunn}
 
-dunn_index <- intCriteria(as.matrix(df), clusters, "Dunn")$dunn
+dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
 
 print(paste("Dunn Index:", dunn_index))
 ```
@@ -405,7 +417,7 @@ Analizziamo il Corrected Rand Index che misura quanto bene il clustering ottenut
 Ed infine il Meila's Variation of Information (VI) Index che misura quanto due cluster differiscono tra loro in termini di entropia. A differenza del Corrected Rand Index, che valuta la similarità, il VI Index misura la distanza tra due partizioni (va perciò minimizzato).
 ```{r hierarchical agglomerative clustering hclust cri}
 status <- as.numeric(banknote$Status)
-clust_stats <- cluster.stats(d = dist(df), status, clusters)
+clust_stats <- cluster.stats(d = dist(df), status, cluster_cut)
 print(paste("Corrected Rand Index:", clust_stats$corrected.rand))
 print(paste("Meila's Index:", clust_stats$vi))
 ```
@@ -486,10 +498,8 @@ Il risultato mostra che il clustering ottimale secondo queste metriche è Ward.D
 La combinazione scelta restituisce i valori migliori possibili per le metriche Silhouette, Corrected Rand Index e VI (Rank 1), mentre risulta meno performante rispetto ad altri metodi, ma compensato dagli altri punteggi, per il Dunn Index (Rank 21).
 
 Visualizziamo i cluster ottenuti.
-```{r}
-final <- eclust(df, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
-
-fviz_cluster(final, geom = "point", ellipse.type = "convex", palette="jco", ggtheme = theme_minimal())
+```{r hierarchical agglomerative clustering eclust}
+fviz_cluster(list(data = df, cluster = cluster_cut), geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
 ```
 
 ### 3.1.2. Dataset trasformato
@@ -531,7 +541,7 @@ fviz_cluster(final_pca, geom = "point", ellipse.type = "norm", palette="jco", gg
 
 Vediamo infine come cambia il clustering considerando solo le variabili `Bottom` e `Diagonal` che sembravano suddividere meglio i dati in gruppi.
 
-```{r}
+```{r hierarchical agglomerative clustering bottom e diagonal}
 
 banknote_bottom_diagonal <- banknote %>% select(Bottom, Diagonal)
 
@@ -557,11 +567,15 @@ Sebbene l'indice Dunn sia inferiore rispetto agli altri approcci, il Corrected R
 
 Visualizziamo come il dataset è stato diviso in cluster.
 
-```{r}
+```{r hierarchical agglomerative clustering bottom e diagonal eclust}
 final_bd <- eclust(banknote_bd_scaled, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
 
 fviz_cluster(final_bd, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
 ```
+
+---
+
+\newpage
 
 # 4. Clustering Partizionale
 
@@ -626,7 +640,7 @@ Calcoliamo adesso il dunn index.
 
 ```{r}
 km_stats <- cluster.stats(distanze, km.res$cluster)
-km_stats$dunn
+km_stats$dunn                           
 ```
 Un Dunn index pari a 0.1124569 suggerisce che la qualità del clustering non è particolarmente elevata.  
 Passiamo a calcolare il corrected rand index.
@@ -697,7 +711,7 @@ Un average silhouette width di 0.62 indica una buona qualità del clustering. Qu
 Procediamo a calcolare il dunn index.  
 ```{r}
 km_stats <- cluster.stats(distanze, km.res$cluster)
-km_stats$dunn
+km_stats$dunn                           
 ```
 
 Un Dunn index pari a 0.1427453 suggerisce che la qualità del clustering non è particolarmente elevata.
@@ -768,26 +782,27 @@ fviz_silhouette(final_pca, palette = "jco",
 Un average silhouette index di 0.53 indica una qualità di clustering discreta,il clustering mostra una separazione relativamente buona tra i cluster.
 
 ```{r}
-km_stats <- cluster.stats(distanze, km.res$cluster)
-km_stats$dunn
+km_stats <- cluster.stats(distanze, final_pca$cluster)
+km_stats$dunn                           
 ```
 
-Un Dunn index pari a 0.1427453 suggerisce che la qualità del clustering non è particolarmente elevata.
+Un Dunn index pari a 0.1124569 suggerisce che la qualità del clustering non è particolarmente elevata.
 Continuiamo con il calcolo dell Corrected Rand Index.
 
 ```{r}
-clust_stats <- cluster.stats(distanze, status, km.res$cluster)
+clust_stats <- cluster.stats(distanze, status, final_pca$cluster)
 clust_stats$corrected.rand
 ```
-Essendo molto vicino a 1, suggerisce che quasi tutte le coppie di osservazioni sono state correttamente assegnate allo stesso cluster o a cluster diversi in entrambe le partizioni.
+
+Questo risultato suggerisce che quasi tutte le coppie di osservazioni sono state correttamente assegnate allo stesso cluster.
 
 ```{r}
 clust_stats$vi
 ```
 
-Anche qui il valore indica una somiglianza molto elevata tra la partizione ottenuta dal clustering e quella di riferimento.
+Il valore non è particolarmente basso, suggerendo che i cluster individuati non riproducono fedelmente la struttura sottostante ai dati originali. 
 
-## 4.2 K-Medoids
+## 4.2 K-Medoids 
 
 ### 4.2.1 Dataset completo
 
@@ -951,6 +966,7 @@ fviz_nbclust(df_pca, pam, nstart = 25, method = "gap_stat", nboot = 50)+
   labs(subtitle = "Gap statistic method")
 ```
 
+Di seguito, vengono mostrati graficamente i due cluster prodotti con l'algoritmo.
 
 ```{r}
 final_pca <- eclust(df_pca, "pam", k = 2, nstart = 25, graph = FALSE)
@@ -960,7 +976,7 @@ fviz_cluster(final_pca, geom = "point", ellipse.type = "convex", palette="jco", 
  
 #### 4.2.3.2. Validazione
 
-Procediamo, anche nel caso del dataset con le variabili ricavate tramite mediante la PCA, a valutare la qualità del clustering k-means calcolando gli indici il **silhouette score**, il **Dunn index**, il **Corrected Rand Index** e il **Meila’s VI index**.
+Procediamo, anche nel caso del dataset con le variabili ricavate tramite mediante la PCA, a valutare la qualità del clustering k-medoids calcolando gli indici il **silhouette score**, il **Dunn index**, il **Corrected Rand Index** e il **Meila’s VI index**.
 
 ```{r}
 fviz_silhouette(final_pca, palette = "jco",
@@ -970,25 +986,29 @@ fviz_silhouette(final_pca, palette = "jco",
 Un average silhouette index di 0.53 indica una qualità di clustering discreta,il clustering mostra una separazione relativamente buona tra i cluster.
 
 ```{r}
-pam_stats <- cluster.stats(distanze, pam.res$cluster)
-pam_stats$dunn
+pam_stats <- cluster.stats(distanze, final_pca$cluster)
+pam_stats$dunn                           
 ```
 
-Un Dunn index pari a 0.1427453 suggerisce che la qualità del clustering non è particolarmente elevata.
+Un Dunn index pari a 0.1124569 suggerisce che la qualità del clustering non è particolarmente elevata.
 Continuiamo con il calcolo dell Corrected Rand Index.
 
 ```{r}
-clust_stats <- cluster.stats(distanze, status, pam.res$cluster)
+clust_stats <- cluster.stats(distanze, status, final_pca$cluster)
 clust_stats$corrected.rand
 ```
 
-Essendo molto vicino a 1, suggerisce che quasi tutte le coppie di osservazioni sono state correttamente assegnate allo stesso cluster o a cluster diversi in entrambe le partizioni.
+Questo risultato suggerisce che quasi tutte le coppie di osservazioni sono state correttamente assegnate allo stesso cluster.
 
 ```{r}
 clust_stats$vi
 ```
 
-Anche qui il valore indica una somiglianza molto elevata tra la partizione ottenuta dal clustering e quella di riferimento.
+Il valore non è particolarmente basso, suggerendo che i cluster individuati non riproducono fedelmente la struttura sottostante ai dati originali. 
+
+---
+
+\newpage
 
 # 5. Clustering Model-based: Mixture of Gaussian
 
@@ -997,8 +1017,7 @@ In questa sezione introduciamo l'applicazione del clustering basato su misture d
 
 ```{r}
 data(banknote)
-dati <- banknote[, -1]
-dati_scaled <- scale(dati)
+dati_scaled <- banknote[, -1]
 gmm_result <- Mclust(dati_scaled)
 summary(gmm_result)
 plot(gmm_result, what = "BIC")
@@ -1006,6 +1025,7 @@ plot(gmm_result, what = "classification")
 plot(gmm_result, what = "uncertainty")
 plot(gmm_result, what = "density")
 ```
+
 Nonostante sappiamo che il dataset banknote presenta due classi reali (ad esempio, banconote fraudolente e non fraudolente), l'analisi con Mclust ha individuato come miglior modello un numero di cluster pari a 3. Inoltre, il modello selezionato è di tipo VEE (ovvero ellissoidale, con forma variabile, ma con volume ed orientamento uguali), in base al valore più alto di BIC evidenziato nel plot. È interessante notare come il BIC per 2 cluster risulti significativamente inferiore rispetto a quello per un numero maggiore di cluster, probabilmente perché sono state utilizzate tutte le variabili del dataset per costruire i cluster.  
 Confrontiamo esplicitamente i valori di BIC e ICL per soluzioni con 2 e 3 cluster:  
 
@@ -1050,7 +1070,8 @@ Adesso, procederemo ad utilizzare solamente le variabili estratte tramite la tec
 
 ```{r}
 dati <- banknote_pca[, -1]
-gmm_result <- Mclust(dati)
+dati_scaled <- scale(dati)
+gmm_result <- Mclust(dati_scaled)
 summary(gmm_result)
 plot(gmm_result, what = "BIC")
 plot(gmm_result, what = "classification")
@@ -1061,13 +1082,17 @@ In questo caso si nota che il valore di BIC è più alto (migliore) rispetto al 
 Verifichiamo ora se i valori di ICL sono in accordo con quelli del BIC confrontando esplicitamente le soluzioni per 2 e 3 cluster:  
 
 ```{r}
-gmm_result2 <- Mclust(dati, G=2)
+gmm_result2 <- Mclust(dati_scaled, G=2)
 summary(gmm_result2)
-gmm_result3 <- Mclust(dati, G=3)
+gmm_result3 <- Mclust(dati_scaled, G=3)
 summary(gmm_result3)
 ```
 
 Anche in questo caso, i valori di BIC e ICL sono concordi: per un numero di cluster pari a 3 si ottiene un BIC di circa -1630 e un ICL di -1657, mentre per 2 cluster il BIC risulta attorno a -1614 e l'ICL a -1616. Questo dimostra che anche l'ICL suggerisce che il modello ottimale è quello con 2 cluster.  
+
+---
+
+\newpage
 
 # 6. Classificazione con gli algoritmi di cluster
 
@@ -1429,6 +1454,10 @@ print(results_df)
 Rispetto ai risultati con il dataset completo o ridotto, l'uso di solo 3 variabili ottenute con PCA ha ridotto la performance globale, in particolare per K-medoids e Gerarchico Agglomerativo. Sebbene l'accuratezza resti elevata, l'ARI e la specificità mostrano una leggera diminuzione, il che suggerisce che la riduzione delle variabili ha compromesso la capacità di questi algoritmi di catturare la struttura dei dati. In particolare, l'algoritmo Gerarchico Agglomerativo mostra una performance molto più bassa in termini di ARI e accuratezza, indicando che l'algoritmo è più sensibile alla perdita di variabili discriminanti.  
 
 In conclusione, dal punto di vista della misurazione delle performance con tecniche esterne (avendo a disposizione la vera classe delle osservazioni), l'algoritmo **GMM** è risultato il migliore nei tre diversi dataset, anche se, tutto sommato, gli altri algoritmi non hanno ottenuto dei cattivi risultati.
+
+---
+
+\newpage
 
 # 7. Conclusioni
 
