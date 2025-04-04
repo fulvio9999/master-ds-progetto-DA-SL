@@ -643,10 +643,11 @@ km_stats$dunn
 ```
 ```{r}
 clust_stats <- cluster.stats(distanze, status, km.res$cluster)
-clust_stats$corrected.rand  
+clust_stats$corrected.rand
+```
+```{r}
 clust_stats$vi
 ```
-
 
 ### 4.1.2 Dataset ridotto
 
@@ -683,8 +684,29 @@ fviz_nbclust(df_ridotto, kmeans, nstart = 25, method = "gap_stat", nboot = 500)+
 
 I risultati ottenuti con i primi due metodi, elbow e silhouette, coincidono con quelli ottenuti sul dataset completo, mentre il gap statistic method identifica 2 cluster.
 
+```{r}
+km.res <- eclust(df_ridotto, "kmeans", k = 2, nstart = 25, graph = FALSE)
+fviz_cluster(km.res, geom = "point", ellipse.type = "norm",
+             palette = "jco", ggtheme = theme_minimal())
+```
+
 #### 4.1.2.2. Validazione
-TODO: da fare
+Commento
+```{r}
+fviz_silhouette(km.res, palette = "jco",
+                ggtheme = theme_classic())
+```
+```{r}
+km_stats <- cluster.stats(distanze, km.res$cluster)
+km_stats$dunn                           
+```
+```{r}
+clust_stats <- cluster.stats(distanze, status, km.res$cluster)
+clust_stats$corrected.rand
+```
+```{r}
+clust_stats$vi
+```
 
 ### 4.1.3 Dataset trasformato
 
@@ -693,14 +715,14 @@ TODO: da fare
 In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-means, dopo aver scalato le variabili numeriche del dataset.
 
 ```{r}
-df_pca <- scale(banknote_pca[, -1])
+df_pca <- banknote_pca[, -1]
 ```
 
 Successivamente si determina il numero ottimale di cluster da utilizzare nell'algoritmo, impiegando il metodo Elbow.
 
 ```{r}
 fviz_nbclust(df_pca, kmeans, method = "wss") +
-  geom_vline(xintercept = 4, linetype = 2)+
+  geom_vline(xintercept = 2, linetype = 2)+
   labs(subtitle = "Elbow method")
 ```
 
@@ -719,10 +741,39 @@ fviz_nbclust(df_pca, kmeans, nstart = 25, method = "gap_stat", nboot = 500, verb
   labs(subtitle = "Gap statistic method")
 ```
 
-In questo caso, il numero di cluster identificato differisce significativamente rispetto agli altri dataset: l'elbow method e il silhouette method individuano 4 cluster, mentre il gap statistic method ne identifica 1.
+Anche in questo caso il numero di cluster ottimale Ã¨ pari a 2.
+
+```{r}
+final_pca <- eclust(df_pca, "kmeans", k = 2, nstart = 25, graph = FALSE)
+
+clusters <- final_pca$cluster
+
+scatterplot3d(df_pca,
+              color = clusters,
+              pch = 19,
+              main = "Clustering su PCA (PC1, PC2, PC3)",
+              xlab = "PC1", ylab = "PC2", zlab = "PC3")
+
+legend("topright", legend = unique(clusters), col = unique(clusters), pch = 19, title = "Cluster")
+```
 
 #### 4.1.3.2. Validazione
-TODO: da fare
+Commento
+```{r}
+fviz_silhouette(final_pca, palette = "jco",
+                ggtheme = theme_classic())
+```
+```{r}
+km_stats <- cluster.stats(distanze, km.res$cluster)
+km_stats$dunn                           
+```
+```{r}
+clust_stats <- cluster.stats(distanze, status, km.res$cluster)
+clust_stats$corrected.rand
+```
+```{r}
+clust_stats$vi
+```
 
 ## 4.2 K-Medoids 
 TODO: da rivedere tutto
@@ -778,12 +829,28 @@ pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
 Come previsto, i cluster risultano molto simili.
 
 ```{r}
-fviz_cluster(pam.res,
-             palette = c("#00AFBB", "#FC4E07"),
-             ellipse.type = "t",
-             repel = TRUE,
-             ggtheme = theme_classic()
-)
+pam.res <- eclust(df, "pam", k = 2, nstart = 25, graph = FALSE)
+fviz_cluster(pam.res, geom = "point", ellipse.type = "norm",
+             palette = "jco", ggtheme = theme_minimal())
+```
+
+#### 4.2.1.2. Validazione
+
+Commento
+```{r}
+fviz_silhouette(pam.res, palette = "jco",
+                ggtheme = theme_classic())
+```
+```{r}
+pam_stats <- cluster.stats(distanze, pam.res$cluster)
+pam_stats$dunn                           
+```
+```{r}
+clust_stats <- cluster.stats(distanze, status, pam.res$cluster)
+clust_stats$corrected.rand
+```
+```{r}
+clust_stats$vi
 ```
 
 ### 4.2.2 Dataset ridotto
@@ -836,12 +903,31 @@ pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
 Come previsto, i cluster risultano molto simili.
 
 ```{r}
-fviz_cluster(pam.res,
-             palette = c("#00AFBB", "#FC4E07"),
-             ellipse.type = "t",
-             repel = TRUE,
-             ggtheme = theme_classic()
-)
+pam.res <- eclust(df_ridotto, "pam", k = 2, nstart = 25, graph = FALSE)
+fviz_cluster(pam.res, geom = "point", ellipse.type = "norm",
+             palette = "jco", ggtheme = theme_minimal())
+```
+
+#### 4.2.1.2. Validazione
+
+Commento
+```{r}
+fviz_silhouette(pam.res, palette = "jco",
+                ggtheme = theme_classic())
+```
+
+```{r}
+pam_stats <- cluster.stats(distanze, pam.res$cluster)
+pam_stats$dunn                           
+```
+
+```{r}
+clust_stats <- cluster.stats(distanze, status, pam.res$cluster)
+clust_stats$corrected.rand
+```
+
+```{r}
+clust_stats$vi
 ```
 
 ### 4.2.3 Dataset trasformato
@@ -853,8 +939,8 @@ Come fatto in precedenza per l'algoritmo k-means, in questo capitolo si cercherÃ
 Vediamo il metodo Elbow.
 
 ```{r}
-df_pca <- scale(banknote_pca[, -1])
-fviz_nbclust(df_ridotto, pam, method = "wss") +
+df_pca <- banknote_pca[, -1]
+fviz_nbclust(df_pca, pam, method = "wss") +
   geom_vline(xintercept = 2, linetype = 2)+
   labs(subtitle = "Elbow method")
 ```
@@ -891,15 +977,39 @@ pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
 Come previsto, i cluster risultano molto simili.
 
 ```{r}
-fviz_cluster(pam.res,
-             palette = c("#00AFBB", "#FC4E07"),
-             ellipse.type = "t",
-             repel = TRUE,
-             ggtheme = theme_classic()
-)
+final_pca <- eclust(df_pca, "pam", k = 2, nstart = 25, graph = FALSE)
+
+clusters <- final_pca$cluster
+
+scatterplot3d(df_pca,
+              color = clusters,
+              pch = 19,
+              main = "Clustering su PCA (PC1, PC2, PC3)",
+              xlab = "PC1", ylab = "PC2", zlab = "PC3")
+
+legend("topright", legend = unique(clusters), col = unique(clusters), pch = 19, title = "Cluster")
 ```
  
-TODO: da rivedere tutto
+#### 4.2.3.2. Validazione
+Commento
+```{r}
+fviz_silhouette(final_pca, palette = "jco",
+                ggtheme = theme_classic())
+```
+
+```{r}
+pam_stats <- cluster.stats(distanze, pam.res$cluster)
+pam_stats$dunn                           
+```
+
+```{r}
+clust_stats <- cluster.stats(distanze, status, pam.res$cluster)
+clust_stats$corrected.rand
+```
+
+```{r}
+clust_stats$vi
+```
 
 ### 4.2.1 Dataset completo
 
