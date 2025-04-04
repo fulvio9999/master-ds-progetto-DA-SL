@@ -909,16 +909,14 @@ summary(gmm_result3)
 Anche in questo caso, i valori di BIC e ICL sono concordi: per un numero di cluster pari a 3 si ottiene un BIC di circa -1630 e un ICL di -1657, mentre per 2 cluster il BIC risulta attorno a -1614 e l'ICL a -1616. Questo dimostra che anche l'ICL suggerisce che il modello ottimale è quello con 2 cluster.  
 
 
-# 6. Validazione e visualizzazione dei risultati
+# 6. Classificazione con gli algoritmi di cluster
 
-In questa sezione per le tre tipologie di dataset (completo, ridotto e trasformato), descriveremo alcune considerazione dei cluster costruiti con i diversi metodi, cercando di evidenziarne le differenze nella caratteristiche apprese. Successivamente analizzeremo la qualità dei diversi metodi di clustering, fissando il numero di cluster pari al numero di classi reali, ovvero 2. Questo approccio ci permette di utilizzare tecniche di validazione esterne, dato che disponiamo delle etichette reali delle osservazioni (variabile 'Status').  
+In questa sezione per le tre tipologie di dataset (completo, ridotto e trasformato), analizzeremo la qualità dei diversi metodi di clustering, fissando il numero di cluster pari al numero di classi reali, ovvero 2. Questo approccio ci permette di utilizzare tecniche di validazione esterne, dato che disponiamo delle etichette reali delle osservazioni (variabile 'Status').  
 Per valutare l'efficacia dei cluster identificati, utilizzeremo diverse metriche, tra cui:  
 - Adjusted Rand Index (ARI) che misura il grado di concordanza tra il clustering ottenuto e la classificazione reale.
 - Metriche di valutazione proprie del machine learning supervisionato, come accuratezza, specificità, recall, matrice di confusione e AUC, per interpretare il clustering come un problema di classificazione binaria.  
 
 ## 6.1. Dataset completo 
-
-### 6.1.1. Validazione con la classe reale
 
 Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset originale con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo. Da precisare che in aggiunta agli algoritmi discussi in precedenza, confrontiamo anche l'algoritmo gerarchico divisivo che non è stato affrontato prima.
 
@@ -1063,37 +1061,7 @@ print(results_df)
 
 I risultati mostrano che il metodo **GMM** ha la migliore performance complessiva, con il più alto valore di ARI (0.98) e un'accuratezza del 99.5%. Il clustering gerarchico agglomerativo ha anch'esso buone prestazioni, mentre K-means e K-medoids mostrano una buona affidabilità ma con AUC leggermente inferiori. Analizzando la sensibilità e la specificità, si nota che la sensibilità – ovvero la capacità di identificare correttamente le banconote contraffatte – è generalmente molto alta per tutti gli algoritmi, indicando un'elevata capacità di individuare i falsi. Tuttavia, la specificità, ossia la capacità di riconoscere correttamente le banconote genuine, varia maggiormente tra i metodi. In particolare, K-means mostra una specificità inferiore (0.92) rispetto a K-medoids (0.97) e ai metodi gerarchici (0.98), suggerendo una maggiore tendenza a classificare erroneamente alcune banconote genuine come contraffatte; questo errore è meno grave di classificare una banconota contraffatta come vera.
 
-### 6.1.2. Interpretazione dei risultati
-
-```{r}
-# Assicuriamoci di avere le librerie necessarie
-library(ggplot2)
-library(reshape2)
-
-# Seleziona le variabili numeriche da visualizzare (ad es. "Bottom", "Diagonal", e altre)
-# Qui usiamo solo "Bottom" e "Diagonal" come esempio; se usi il dataset completo, includi anche le altre variabili.
-vars_to_plot <- c("Bottom", "Diagonal")
-
-# Crea un data frame in formato lungo per i boxplot, per il clustering K-means
-boxplot_data <- melt(banknote, 
-                     id.vars = c("Status", "kmeans"), 
-                     measure.vars = vars_to_plot)
-
-# Crea il boxplot
-ggplot(boxplot_data, aes(x = factor(kmeans), y = value, fill = factor(kmeans))) +
-  geom_boxplot() +
-  facet_wrap(~variable, scales = "free") +
-  labs(title = "Boxplot delle variabili per cluster (K-means)",
-       x = "Cluster (K-means)",
-       y = "Valore") +
-  theme_minimal()
-
-```
-
-
 ## 6.2. Dataset ridotto
-
-### 6.2.1. Validazione con la classe reale
 
 Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset ridotto (con le sole variabili 'Diagonal' e 'Bottom') con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
 
@@ -1203,11 +1171,7 @@ Questa configurazione semplifica il modello senza perdere accuratezza, dimostran
 - K-means, K-medoids e GMM ottengono ARI 0.98, accuracy 99.5% e AUC ~1, confermando che queste due variabili sono altamente discriminative.  
 - GMM raggiunge sensibilità 100%, identificando tutte le banconote contraffatte, mentre K-means e K-medoids garantiscono specificità 100%, evitando falsi positivi.  
 
-### 6.2.2. Interpretazione dei risultati
-
 ## 6.3. Dataset ridotto
-
-### 6.3.1. Validazione con la classe reale
 
 Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset trasformato (con le variabili trasformate mediante tecnica PCA) con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
 
@@ -1314,8 +1278,6 @@ print(results_df)
 Rispetto ai risultati con il dataset completo o ridotto, l'uso di solo 3 variabili ottenute con PCA ha ridotto la performance globale, in particolare per K-medoids e Gerarchico Agglomerativo. Sebbene l'accuratezza resti elevata, l'ARI e la specificità mostrano una leggera diminuzione, il che suggerisce che la riduzione delle variabili ha compromesso la capacità di questi algoritmi di catturare la struttura dei dati. In particolare, l'algoritmo Gerarchico Agglomerativo mostra una performance molto più bassa in termini di ARI e accuratezza, indicando che l'algoritmo è più sensibile alla perdita di variabili discriminanti.  
 
 In conclusione, dal punto di vista della misurazione delle performance con tecniche esterne (avendo a disposizione la vera classe delle osservazioni), l'algoritmo **GMM** è risultato il migliore nei tre diversi dataset, anche se, tutto sommato, gli altri algoritmi non hanno ottenuto dei cattivi risultati.
-
-### 6.2.2. Interpretazione dei risultati
 
 # 7. Conclusioni
 
