@@ -365,9 +365,9 @@ Pertanto non possiamo optare per una scelta di "maggioranza", decidiamo di scegl
 
 Procediamo con il taglio del dendogramma in modo da ottenere 2 cluster. Successivamente visualizziamo una tabella di frequenza che mostra il numero di osservazioni assegnate a ciascun cluster, permettendoci di verificare la distribuzione dei dati tra i 3 cluster ottenuti.
 ```{r hierarchical agglomerative clustering hclust cut}
-cluster_cut <- cutree(hclust_clustering, k = 2)
+clusters <- cutree(hclust_clustering, k = 2)
 
-table(cluster_cut)
+table(clusters)
 
 fviz_dend(hclust_clustering, k = 2,
         cex = 0.5,
@@ -383,7 +383,7 @@ Valutiamo ora la qualità dei risultati del nostro algoritmo di clustering media
 
 Iniziamo con la metrica della silhouette media (calcolata come la media di s(i) su tutte le osservazioni), che fornisce un'indicazione complessiva della qualità del clustering: si auspica un valore il più vicino ad 1 possibile.
 ```{r hierarchical agglomerative clustering hclust cut sil}
-sil <- silhouette(cluster_cut, distanze)
+sil <- silhouette(clusters, distanze)
 fviz_silhouette(sil, palette = "jco", ggtheme = theme_classic())
 ```
 Un valore di 0.37 suggerisce che la struttura dei cluster non è particolarmente forte: c'è una separazione moderata, ma c'è anche una certa sovrapposizione tra i cluster.
@@ -394,7 +394,7 @@ Pertanto l'indice di Dunn deve essere massimizzato.
 
 ```{r hierarchical agglomerative clustering hclust dunn}
 
-dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
+dunn_index <- intCriteria(as.matrix(df), clusters, "Dunn")$dunn
 
 print(paste("Dunn Index:", dunn_index))
 ```
@@ -405,7 +405,7 @@ Analizziamo il Corrected Rand Index che misura quanto bene il clustering ottenut
 Ed infine il Meila's Variation of Information (VI) Index che misura quanto due cluster differiscono tra loro in termini di entropia. A differenza del Corrected Rand Index, che valuta la similarità, il VI Index misura la distanza tra due partizioni (va perciò minimizzato).
 ```{r hierarchical agglomerative clustering hclust cri}
 status <- as.numeric(banknote$Status)
-clust_stats <- cluster.stats(d = dist(df), status, cluster_cut)
+clust_stats <- cluster.stats(d = dist(df), status, clusters)
 print(paste("Corrected Rand Index:", clust_stats$corrected.rand))
 print(paste("Meila's Index:", clust_stats$vi))
 ```
@@ -486,8 +486,10 @@ Il risultato mostra che il clustering ottimale secondo queste metriche è Ward.D
 La combinazione scelta restituisce i valori migliori possibili per le metriche Silhouette, Corrected Rand Index e VI (Rank 1), mentre risulta meno performante rispetto ad altri metodi, ma compensato dagli altri punteggi, per il Dunn Index (Rank 21).
 
 Visualizziamo i cluster ottenuti.
-```{r hierarchical agglomerative clustering eclust}
-fviz_cluster(list(data = df, cluster = cluster_cut), geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
+```{r}
+final <- eclust(df, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
+
+fviz_cluster(final, geom = "point", ellipse.type = "convex", palette="jco", ggtheme = theme_minimal())
 ```
 
 ### 3.1.2. Dataset trasformato
@@ -529,7 +531,7 @@ fviz_cluster(final_pca, geom = "point", ellipse.type = "norm", palette="jco", gg
 
 Vediamo infine come cambia il clustering considerando solo le variabili `Bottom` e `Diagonal` che sembravano suddividere meglio i dati in gruppi.
 
-```{r hierarchical agglomerative clustering bottom e diagonal}
+```{r}
 
 banknote_bottom_diagonal <- banknote %>% select(Bottom, Diagonal)
 
@@ -555,7 +557,7 @@ Sebbene l'indice Dunn sia inferiore rispetto agli altri approcci, il Corrected R
 
 Visualizziamo come il dataset è stato diviso in cluster.
 
-```{r hierarchical agglomerative clustering bottom e diagonal eclust}
+```{r}
 final_bd <- eclust(banknote_bd_scaled, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
 
 fviz_cluster(final_bd, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
@@ -624,7 +626,7 @@ Calcoliamo adesso il dunn index.
 
 ```{r}
 km_stats <- cluster.stats(distanze, km.res$cluster)
-km_stats$dunn                           
+km_stats$dunn
 ```
 Un Dunn index pari a 0.1124569 suggerisce che la qualità del clustering non è particolarmente elevata.  
 Passiamo a calcolare il corrected rand index.
@@ -695,7 +697,7 @@ Un average silhouette width di 0.62 indica una buona qualità del clustering. Qu
 Procediamo a calcolare il dunn index.  
 ```{r}
 km_stats <- cluster.stats(distanze, km.res$cluster)
-km_stats$dunn                           
+km_stats$dunn
 ```
 
 Un Dunn index pari a 0.1427453 suggerisce che la qualità del clustering non è particolarmente elevata.
@@ -767,7 +769,7 @@ Un average silhouette index di 0.53 indica una qualità di clustering discreta,i
 
 ```{r}
 km_stats <- cluster.stats(distanze, km.res$cluster)
-km_stats$dunn                           
+km_stats$dunn
 ```
 
 Un Dunn index pari a 0.1427453 suggerisce che la qualità del clustering non è particolarmente elevata.
@@ -785,7 +787,7 @@ clust_stats$vi
 
 Anche qui il valore indica una somiglianza molto elevata tra la partizione ottenuta dal clustering e quella di riferimento.
 
-## 4.2 K-Medoids 
+## 4.2 K-Medoids
 
 ### 4.2.1 Dataset completo
 
@@ -969,7 +971,7 @@ Un average silhouette index di 0.53 indica una qualità di clustering discreta,i
 
 ```{r}
 pam_stats <- cluster.stats(distanze, pam.res$cluster)
-pam_stats$dunn                           
+pam_stats$dunn
 ```
 
 Un Dunn index pari a 0.1427453 suggerisce che la qualità del clustering non è particolarmente elevata.
@@ -1048,8 +1050,7 @@ Adesso, procederemo ad utilizzare solamente le variabili estratte tramite la tec
 
 ```{r}
 dati <- banknote_pca[, -1]
-dati_scaled <- scale(dati)
-gmm_result <- Mclust(dati_scaled)
+gmm_result <- Mclust(dati)
 summary(gmm_result)
 plot(gmm_result, what = "BIC")
 plot(gmm_result, what = "classification")
@@ -1060,9 +1061,9 @@ In questo caso si nota che il valore di BIC è più alto (migliore) rispetto al 
 Verifichiamo ora se i valori di ICL sono in accordo con quelli del BIC confrontando esplicitamente le soluzioni per 2 e 3 cluster:  
 
 ```{r}
-gmm_result2 <- Mclust(dati_scaled, G=2)
+gmm_result2 <- Mclust(dati, G=2)
 summary(gmm_result2)
-gmm_result3 <- Mclust(dati_scaled, G=3)
+gmm_result3 <- Mclust(dati, G=3)
 summary(gmm_result3)
 ```
 
