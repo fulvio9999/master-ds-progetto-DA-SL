@@ -119,13 +119,9 @@ Per avere una prima idea delle relazioni tra le variabili, creiamo una matrice d
 ggpairs(banknote[,-1],upper = list(continuous = "density", combo = "box_no_facet"),
         lower = list(continuous = "points", combo = "dot_no_facet"),aes(colour=banknote$Status))
 ```
-
-TODO: sintetizzare
-Lungo la diagonale sono visibili le distribuzioni univariate delle variabili. Si nota una sovrapposizione parziale tra i due gruppi di colore (Status), ma anche zone in cui uno dei due colori prevale.
-Nei grafici di densità bivariata (metà diagonale superiore della matrice) e negli scatter plot (metà diagonale inferiore della matrice), si osservano alcune regioni in cui i punti di uno stesso colore tendono a concentrarsi, suggerendo cluster parzialmente distinti.
-Nonostante la sovrapposizione in diverse aree, si intravedono regioni in cui un gruppo prevale. Ciò suggerisce che un algoritmo di classificazione o di clustering potrebbe distinguere parzialmente le due classi, anche se non in modo perfetto con una singola coppia di variabili.
-È importante sottolineare che questo grafico mostra solo le relazioni a coppie. Ciò significa che l'analisi si limita a considerare due variabili alla volta, mentre una clusterizzazione netta potrebbe emergere solo quando si considerano contemporaneamente più variabili. In altre parole, anche se alcune coppie non evidenziano una separazione chiara, combinando più dimensioni si potrebbe scoprire una struttura clusterizzata più marcata.
-Il fatto che in alcune proiezioni (coppie di variabili) si vedano zone di separazione o contorni distinti suggerisce che esistono sottostrutture nei dati. Notiamo infine che le variabili `Bottom` e `Diagonal` sembrerebbero separare in modo migliore il dataset rispetto alle altre variabili.
+La matrice di scatter plot mostra una parziale separazione tra i due gruppi (`Status`), visibile sia nelle distribuzioni univariate che nelle relazioni bivariate.
+Sebbene vi sia sovrapposizione in diverse aree, alcune coppie di variabili, in particolare `Bottom` e `Diagonal`, evidenziano una migliore distinzione tra i gruppi.
+Questo suggerisce la presenza di una struttura nei dati che potrebbe essere rilevata più chiaramente considerando più variabili insieme
 
 D'ora in avanti, per ciascun algoritmo di clustering che proveremo, verranno effettuate tre diverse analisi:
 
@@ -516,15 +512,8 @@ best_overall_pca <- results_ranked_pca %>% arrange(total_rank) %>% head(1)
 print(best_overall_pca)
 ```
 
-TODO: sintetizzare
-Il risultato indica che, applicando il clustering agglomerativo con numero di cluster pari a 2 e metodo di linkage "average" al dataset ridotto a tre componenti principali, otteniamo la combinazione migliore in base ai 4 indici di valutazione, anche se i risultati presentano alcune peculiarità.
-Rispetto alle altre combinazioni testate, la silhouette e la VI hanno ottenuto i migliori punteggi (rank 1), il Corrected Rand è quasi il migliore (rank 2), invece l'indice Dunn, in questa combinazione, non performa bene rispetto ad altre configurazioni testate (rank 27).
-Rispetto al clustering agglomerativo applicato su tutte le variabili del dataset il clustering sul dataset ridotto mostra:
-- Un indice silhouette leggermente migliore (0.431) rispetto a quello su tutte le variabili (0.375), suggerendo che i punti sono, mediamente, meglio raggruppati all'interno dei cluster nel caso PCA.
-- Il clustering su tutte le variabili ha un indice Dunn migliore (0.211 vs 0.106), il che significa che la separazione minima tra cluster è maggiore e i cluster risultano più distinti.
-- Entrambe le soluzioni mostrano valori molto alti del Corrected Rand e bassi del VI, ma la soluzione con tutte le variabili è leggermente superiore (0.960 vs 0.902 e 0.098 vs 0.200), indicando una migliore aderenza ad una struttura di riferimento o una maggiore stabilità del clustering.
-
-Mentre l'approccio con PCA (riduzione a 3 componenti) offre cluster con una buona compattezza (indice silhouette migliore), il clustering basato su tutte le variabili, utilizzando il metodo ward.D2, risulta complessivamente superiore per quanto riguarda la separazione tra cluster e la corrispondenza con una struttura di riferimento (migliori valori di Dunn, Corrected Rand e VI).
+Applicando il clustering agglomerativo con metodo "average" su 3 componenti principali (PCA) e 2 cluster, si ottiene la combinazione migliore secondo la maggior parte degli indici di valutazione, con silhouette e VI al primo posto, ma un indice Dunn debole.
+Rispetto al clustering su tutte le variabili, la soluzione con PCA ha una silhouette leggermente migliore, ma risulta inferiore negli altri indici (Dunn, Corrected Rand, VI), suggerendo che la riduzione dimensionale migliora la coesione interna, ma non necessariamente la separazione o l'aderenza alla struttura reale.
 
 Vediamo graficamente come sono separati i due cluster.
 ```{r hierarchical agglomerative clustering pca eclust}
@@ -567,13 +556,11 @@ results_ranked_bd <- results_all_bd %>%
 best_overall_bd <- results_ranked_bd %>% arrange(total_rank) %>% head(1)
 print(best_overall_bd)
 ```
-TODO: sintetizzare
-In questo caso la combinazione migliore è data da metodo di linkage `ward.D2` e numero cluster pari a 2. Notiamo che in questo caso che il valore Silhouette 0.6245 è più alto rispetto agli altri due approcci (0.431 per PCA e 0.375 usando tutte le variabili), il che indica che i punti all'interno dei cluster sono ben raggruppati e distinti l'uno dall'altro.
-Ciò supporta l'idea iniziale che queste due variabili siano in grado di dividere bene il dataset.
-Il Dunn index risulta più basso rispetto a quello ottenuto con tutte le variabili (0.211) o con la PCA (0.106), il che potrebbe significare che alcuni cluster risultano più vicini o con una certa dispersione interna.
-Il Corrected Rand 0.9602 rimane molto elevato, segnalando una forte coerenza con la struttura di riferimento attesa. L'indice VI è basso, confermando una buona similarità o una discreta aderenza a una struttura di riferimento.
+Utilizzando solo le variabili Bottom e Top, la combinazione migliore (linkage ward.D2, k = 2) ottiene il valore silhouette più alto (0.6245), indicando cluster ben distinti.
+Sebbene l'indice Dunn sia inferiore rispetto agli altri approcci, il Corrected Rand resta molto elevato (0.9602) e il VI basso, confermando una buona coerenza con la struttura attesa. Questo supporta l'idea che le due variabili selezionate siano efficaci nel separare i gruppi.
 
 Visualizziamo come il dataset è stato diviso in cluster.
+
 ```{r hierarchical agglomerative clustering bottom e diagonal eclust}
 final_bd <- eclust(banknote_bd_scaled, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
 
