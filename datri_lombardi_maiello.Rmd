@@ -395,7 +395,7 @@ Valutiamo ora la qualità dei risultati del nostro algoritmo di clustering media
 
 Iniziamo con la metrica della silhouette media (calcolata come la media di s(i) su tutte le osservazioni), che fornisce un'indicazione complessiva della qualità del clustering: si auspica un valore il più vicino ad 1 possibile.
 ```{r hierarchical agglomerative clustering hclust cut sil}
-sil <- silhouette(cluster_cut, distanze)
+sil <- silhouette(clusters, distanze)
 fviz_silhouette(sil, palette = "jco", ggtheme = theme_classic())
 ```
 Un valore di 0.37 suggerisce che la struttura dei cluster non è particolarmente forte: c'è una separazione moderata, ma c'è anche una certa sovrapposizione tra i cluster.
@@ -406,7 +406,7 @@ Pertanto l'indice di Dunn deve essere massimizzato.
 
 ```{r hierarchical agglomerative clustering hclust dunn}
 
-dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
+dunn_index <- intCriteria(as.matrix(df), clusters, "Dunn")$dunn
 
 print(paste("Dunn Index:", dunn_index))
 ```
@@ -417,7 +417,7 @@ Analizziamo il Corrected Rand Index che misura quanto bene il clustering ottenut
 Ed infine il Meila's Variation of Information (VI) Index che misura quanto due cluster differiscono tra loro in termini di entropia. A differenza del Corrected Rand Index, che valuta la similarità, il VI Index misura la distanza tra due partizioni (va perciò minimizzato).
 ```{r hierarchical agglomerative clustering hclust cri}
 status <- as.numeric(banknote$Status)
-clust_stats <- cluster.stats(d = dist(df), status, cluster_cut)
+clust_stats <- cluster.stats(d = dist(df), status, clusters)
 print(paste("Corrected Rand Index:", clust_stats$corrected.rand))
 print(paste("Meila's Index:", clust_stats$vi))
 ```
@@ -481,7 +481,7 @@ print(best_corrected_rand)
 best_vi <- results_all %>% group_by(Method) %>% filter(VI == min(VI))
 print(best_vi)
 ```
-```{r hierarchical agglomerative clustering best}
+```{r}
 results_ranked <- results_all %>%
   mutate(
     rank_sil = rank(-Silhouette, ties.method = "min"),
@@ -498,15 +498,17 @@ Il risultato mostra che il clustering ottimale secondo queste metriche è Ward.D
 La combinazione scelta restituisce i valori migliori possibili per le metriche Silhouette, Corrected Rand Index e VI (Rank 1), mentre risulta meno performante rispetto ad altri metodi, ma compensato dagli altri punteggi, per il Dunn Index (Rank 21).
 
 Visualizziamo i cluster ottenuti.
-```{r hierarchical agglomerative clustering eclust}
-fviz_cluster(list(data = df, cluster = cluster_cut), geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
+```{r}
+final <- eclust(df, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
+
+fviz_cluster(final, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
 ```
 
 ### 3.1.2. Dataset trasformato
 
 Vediamo come cambia il clustering se invece che considerare tutte le variabili del dataset, consideriamo solo le tre componenti principali trovate prima.
 
-```{r hierarchical agglomerative clustering pca best}
+```{r}
 
 banknote_pca_num <- banknote_pca[,-1]
 
