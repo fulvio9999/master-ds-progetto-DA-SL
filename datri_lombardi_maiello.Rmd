@@ -88,14 +88,14 @@ head(banknote)
 str(banknote)
 ```
 
-Il dataset è composto da 200 osservazioni e 7 variabili, tutte di tipo numerico ad eccezione di 'Status' che è una variabile binaria che può assumere uno tra i seguenti valori: 'counterfeit' e 'genuine'.
+Il dataset è composto da 200 osservazioni e 7 variabili, tutte di tipo numerico ad eccezione di `Status` che è una variabile binaria che può assumere uno tra i seguenti valori: `counterfeit` e `genuine`.
 
 Visualizziamo un riepilogo statistico delle variabili.
 
 ```{r summary}
 summary(banknote)
 ```
-Notiamo che la colonna 'Status' è perfettamente bilanciata.
+Notiamo che la colonna `Status` è perfettamente bilanciata.
 
 Controlliamo se ci sono valori mancanti nelle colonne.
 
@@ -103,7 +103,7 @@ Controlliamo se ci sono valori mancanti nelle colonne.
 colSums(is.na(banknote))
 ```
 Come possiamo vedere nessuna colonna presenta valori mancanti.  
-Per avere una prima idea delle relazioni tra le variabili, creiamo una matrice di scatterplot. Utilizziamo la colonna 'Status' per colorare i punti.
+Per avere una prima idea delle relazioni tra le variabili, creiamo una matrice di scatterplot. Utilizziamo la colonna `Status` per colorare i punti.
 
 ```{r scatterplot}
 library(GGally)
@@ -116,13 +116,13 @@ Lungo la diagonale sono visibili le distribuzioni univariate delle variabili. Si
 Nei grafici di densità bivariata (metà diagonale superiore della matrice) e negli scatter plot (metà diagonale inferiore della matrice), si osservano alcune regioni in cui i punti di uno stesso colore tendono a concentrarsi, suggerendo cluster parzialmente distinti.
 Nonostante la sovrapposizione in diverse aree, si intravedono regioni in cui un gruppo prevale. Ciò suggerisce che un algoritmo di classificazione o di clustering potrebbe distinguere parzialmente le due classi, anche se non in modo perfetto con una singola coppia di variabili.
 È importante sottolineare che questo grafico mostra solo le relazioni a coppie. Ciò significa che l'analisi si limita a considerare due variabili alla volta, mentre una clusterizzazione netta potrebbe emergere solo quando si considerano contemporaneamente più variabili. In altre parole, anche se alcune coppie non evidenziano una separazione chiara, combinando più dimensioni si potrebbe scoprire una struttura clusterizzata più marcata.
-Il fatto che in alcune proiezioni (coppie di variabili) si vedano zone di separazione o contorni distinti suggerisce che esistono sottostrutture nei dati. Notiamo infine che le variabili 'Bottom' e 'Diagonal' sembrerebbero separare in modo migliore il dataset rispetto alle altre variabili.
+Il fatto che in alcune proiezioni (coppie di variabili) si vedano zone di separazione o contorni distinti suggerisce che esistono sottostrutture nei dati. Notiamo infine che le variabili `Bottom` e `Diagonal` sembrerebbero separare in modo migliore il dataset rispetto alle altre variabili.
 
 D'ora in avanti, per ciascun algoritmo di clustering che proveremo, verranno effettuate tre diverse analisi:
 
 1. **Dataset completo**: utilizzando tutte le variabili disponibili nel dataset.
 
-2. **Dataset ridotto**: considerando esclusivamente le variabili 'Diagonal' e 'Bottom'.
+2. **Dataset ridotto**: considerando esclusivamente le variabili `Diagonal` e `Bottom`.
 
 3. **Dataset trasformato**: Applicando l'Analisi delle Componenti Principali (PCA) per ridurre la dimensionalità.
 
@@ -301,7 +301,7 @@ distanze <- dist(df, method = "euclidean")
 diss_matrix <- as.matrix(distanze)
 ```
 
-Applichiamo il clustering con metodo di linkage 'ward' che generalmente insieme all'average linkage, performa meglio.
+Applichiamo il clustering con metodo di linkage `ward` che generalmente insieme all'average linkage, performa meglio.
 
 ```{r hierarchical agglomerative clustering hclust}
 hclust_clustering <- hclust(distanze, method = "ward.D2")
@@ -348,7 +348,7 @@ fviz_nbclust(df, FUN = hcut, method = "gap_stat", nboot = 500, verbose = FALSE)+
 TODO: sintetizzare
 Nel grafico, la linea che rappresenta il punto in cui il Gap Statistic non aumenta più in maniera significativa, è su 3 cluster, il che indica che quando i dati vengono divisi in 3 gruppi la struttura di clustering risulta migliore rispetto a quella attesa in un dataset casuale. In altre parole, il modello a 3 cluster spiega meglio la struttura intrinseca dei dati.
 
-Utilizziamo infine il pacchetto 'NbClust' che valuta il numero ottimale di cluster utilizzando numerosi indici interni. Tra questi, alcuni indici come l'indice di Hubert e il Dindex vengono visualizzati graficamente.
+Utilizziamo infine il pacchetto `NbClust` che valuta il numero ottimale di cluster utilizzando numerosi indici interni. Tra questi, alcuni indici come l'indice di Hubert e il Dindex vengono visualizzati graficamente.
 ```{r hierarchical agglomerative clustering hclust NbClust}
 library("NbClust")
 
@@ -406,7 +406,7 @@ print(paste("Dunn Index:", dunn_index))
 
 Un Dunn Index di 0.125 indica che i cluster hanno una separazione piuttosto bassa rispetto alla loro coesione interna. Una bassa separazione tra cluster suggerisce possibili problemi di sovrapposizione.
 
-Analizziamo il Corrected Rand Index che misura quanto bene il clustering ottenuto corrisponde a una partizione di riferimento. Nel nostro caso utilizziamo la colonna 'Status' del dataset.
+Analizziamo il Corrected Rand Index che misura quanto bene il clustering ottenuto corrisponde a una partizione di riferimento. Nel nostro caso utilizziamo la colonna `Status` del dataset.
 Ed infine il Meila's Variation of Information (VI) Index che misura quanto due cluster differiscono tra loro in termini di entropia. A differenza del Corrected Rand Index, che valuta la similarità, il VI Index misura la distanza tra due partizioni (va perciò minimizzato).
 ```{r hierarchical agglomerative clustering hclust cri}
 library("fpc")
@@ -568,7 +568,7 @@ legend("topright", legend = unique(clusters), col = unique(clusters), pch = 19, 
 
 ### 3.1.3. Dataset ridotto
 
-Vediamo infine come cambia il clustering considerando solo le variabili 'Bottom' e 'Diagonal' che sembravano suddividere meglio i dati in gruppi.
+Vediamo infine come cambia il clustering considerando solo le variabili `Bottom` e `Diagonal` che sembravano suddividere meglio i dati in gruppi.
 
 ```{r hierarchical agglomerative clustering bottom e diagonal}
 
@@ -592,7 +592,7 @@ best_overall_bd <- results_ranked_bd %>% arrange(total_rank) %>% head(1)
 print(best_overall_bd)
 ```
 TODO: sintetizzare
-In questo caso la combinazione migliore è data da metodo di linkage 'ward.D2' e numero cluster pari a 2. Notiamo che in questo caso che il valore Silhouette 0.6245 è più alto rispetto agli altri due approcci (0.431 per PCA e 0.375 usando tutte le variabili), il che indica che i punti all'interno dei cluster sono ben raggruppati e distinti l'uno dall'altro.
+In questo caso la combinazione migliore è data da metodo di linkage `ward.D2` e numero cluster pari a 2. Notiamo che in questo caso che il valore Silhouette 0.6245 è più alto rispetto agli altri due approcci (0.431 per PCA e 0.375 usando tutte le variabili), il che indica che i punti all'interno dei cluster sono ben raggruppati e distinti l'uno dall'altro.
 Ciò supporta l'idea iniziale che queste due variabili siano in grado di dividere bene il dataset.
 Il Dunn index risulta più basso rispetto a quello ottenuto con tutte le variabili (0.211) o con la PCA (0.106), il che potrebbe significare che alcuni cluster risultano più vicini o con una certa dispersione interna.
 Il Corrected Rand 0.9602 rimane molto elevato, segnalando una forte coerenza con la struttura di riferimento attesa. L'indice VI è basso, confermando una buona similarità o una discreta aderenza a una struttura di riferimento.
@@ -911,7 +911,7 @@ Anche in questo caso, i valori di BIC e ICL sono concordi: per un numero di clus
 
 # 6. Classificazione con gli algoritmi di cluster
 
-In questa sezione per le tre tipologie di dataset (completo, ridotto e trasformato), analizzeremo la qualità dei diversi metodi di clustering, fissando il numero di cluster pari al numero di classi reali, ovvero 2. Questo approccio ci permette di utilizzare tecniche di validazione esterne, dato che disponiamo delle etichette reali delle osservazioni (variabile 'Status').  
+In questa sezione per le tre tipologie di dataset (completo, ridotto e trasformato), analizzeremo la qualità dei diversi metodi di clustering, fissando il numero di cluster pari al numero di classi reali, ovvero 2. Questo approccio ci permette di utilizzare tecniche di validazione esterne, dato che disponiamo delle etichette reali delle osservazioni (variabile `Status`).  
 Per valutare l'efficacia dei cluster identificati, utilizzeremo diverse metriche, tra cui:  
 - Adjusted Rand Index (ARI) che misura il grado di concordanza tra il clustering ottenuto e la classificazione reale.
 - Metriche di valutazione proprie del machine learning supervisionato, come accuratezza, specificità, recall, matrice di confusione e AUC, per interpretare il clustering come un problema di classificazione binaria.  
@@ -1063,7 +1063,7 @@ I risultati mostrano che il metodo **GMM** ha la migliore performance complessiv
 
 ## 6.2. Dataset ridotto
 
-Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset ridotto (con le sole variabili 'Diagonal' e 'Bottom') con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
+Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset ridotto (con le sole variabili `Diagonal` e `Bottom`) con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
 
 ```{r}
 library(cluster) 
@@ -1167,7 +1167,7 @@ results_df <- data.frame(
 print(results_df)
 ```
 
-Questa configurazione semplifica il modello senza perdere accuratezza, dimostrando che 'Bottom' e 'Diagonal' sono le variabili chiave per distinguere le classi:  
+Questa configurazione semplifica il modello senza perdere accuratezza, dimostrando che `Bottom` e `Diagonal` sono le variabili chiave per distinguere le classi:  
 - K-means, K-medoids e GMM ottengono ARI 0.98, accuracy 99.5% e AUC ~1, confermando che queste due variabili sono altamente discriminative.  
 - GMM raggiunge sensibilità 100%, identificando tutte le banconote contraffatte, mentre K-means e K-medoids garantiscono specificità 100%, evitando falsi positivi.  
 
