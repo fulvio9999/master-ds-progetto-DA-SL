@@ -591,15 +591,15 @@ fviz_cluster(final_bd, geom = "point", ellipse.type = "norm", palette="jco", ggt
 
 # 4. Clustering Partizionale
 
-TODO: inserire commento introduttivo
+In questo capitolo analizzeremo,  il clustering parziale che è una tecnica di apprendimento non supervisionato che mira a suddividere un dataset in gruppi distinti, detti cluster, senza sovrapposizioni. A differenza del clustering gerarchico, che costruisce una struttura ad albero, il clustering parziale assegna ogni punto dati a un unico cluster, ottimizzando un criterio di similarità.
+
+Gli algoritmi che utilizzeremo sono il k-means che è uno dei più utilizzati per la sua semplicità ed efficienza e il k-medoids che supera alcune limitazioni del k-means.
 
 ## 4.1. K-Means
 
-TODO: inserire commento introduttivo
+In questo capitolo, applicheremo l'algoritmo k-means sui tre dataset derivati dal dataset *banknote*, il dataset completo, quello contenente solo le variabili `Bottom` e `Diagonal`, infine quello trasformato tramite PCA e ne analizzeremo i risultati.
 
 ### 4.1.1. Dataset completo
-
-TODO: inserire commento introduttivo
 
 #### 4.1.1.1. Scelta del miglior numero di cluster k
 
@@ -803,7 +803,7 @@ fviz_nbclust(df_ridotto, pam, nstart = 25, method = "gap_stat", nboot = 50)+
   labs(subtitle = "Gap statistic method")
 ```
 
-
+Anche in questo caso il numero ottimale di cluster è 2.
 
 ```{r}
 df_ridotto <- df[, c("Bottom", "Diagonal")]
