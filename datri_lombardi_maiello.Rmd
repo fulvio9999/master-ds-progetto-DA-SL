@@ -718,6 +718,180 @@ TODO: da rivedere tutto
 
 ### 4.2.1 Dataset completo
 
+#### 4.2.1.1. Scelta del miglior numero di cluster k
+
+Come fatto in precedenza per l'algoritmo k-means, in questo capitolo si cercherà di determinare il numero di cluster k utilizzando i metodi elbow. silhouette e della GAP analysis sfruttando la funzione pam.
+
+Vediamo il metodo Elbow.
+
+```{r}
+fviz_nbclust(df, pam, method = "wss") +
+  geom_vline(xintercept = 2, linetype = 2)+
+  labs(subtitle = "Elbow method")
+```
+
+Il metodo Silhouette.
+
+```{r}
+fviz_nbclust(df, pam, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+```
+
+Ed infine la GAP analysis:
+```{r}
+set.seed(123)
+fviz_nbclust(df, pam, nstart = 25, method = "gap_stat", nboot = 50)+
+  labs(subtitle = "Gap statistic method")
+```
+
+Tutti metodi suggeriscono che il numero ottimale dei cluster è pari a 2. 
+
+```{r}
+library(cluster)
+head(df, n = 3)
+
+pam.res <- pam(df, 2)
+print(pam.res)
+
+dd <- cbind(banknote, cluster = pam.res$cluster)
+head(dd, n = 8)
+
+pam.res$medoids
+
+head(pam.res$clustering)
+
+cl <- pam.res$clustering
+pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
+```
+
+Come previsto, i cluster risultano molto simili.
+
+```{r}
+fviz_cluster(pam.res,
+             palette = c("#00AFBB", "#FC4E07"),
+             ellipse.type = "t",
+             repel = TRUE,
+             ggtheme = theme_classic()
+)
+```
+
+### 4.2.2 Dataset ridotto
+
+#### 4.2.2.1. Scelta del miglior numero di cluster k
+
+Come fatto in precedenza per l'algoritmo k-means, in questo capitolo si cercherà di determinare il numero di cluster k utilizzando i metodi elbow. silhouette e della GAP analysis sfruttando la funzione pam.
+
+Vediamo il metodo Elbow.
+
+```{r}
+df_ridotto <- df[, c("Bottom", "Diagonal")]
+fviz_nbclust(df_ridotto, pam, method = "wss") +
+  geom_vline(xintercept = 2, linetype = 2)+
+  labs(subtitle = "Elbow method")
+```
+
+Il metodo Silhouette.
+
+```{r}
+fviz_nbclust(df_ridotto, pam, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+```
+
+Ed infine la GAP analysis:
+```{r}
+set.seed(123)
+fviz_nbclust(df_ridotto, pam, nstart = 25, method = "gap_stat", nboot = 50)+
+  labs(subtitle = "Gap statistic method")
+```
+
+
+
+```{r}
+df_ridotto <- df[, c("Bottom", "Diagonal")]
+pam.res <- pam(df_ridotto, 2)
+print(pam.res)
+
+dd <- cbind(banknote, cluster = pam.res$cluster)
+head(dd, n = 8)
+
+pam.res$medoids
+
+head(pam.res$clustering)
+
+cl <- pam.res$clustering
+pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
+```
+
+Come previsto, i cluster risultano molto simili.
+
+```{r}
+fviz_cluster(pam.res,
+             palette = c("#00AFBB", "#FC4E07"),
+             ellipse.type = "t",
+             repel = TRUE,
+             ggtheme = theme_classic()
+)
+```
+
+### 4.2.3 Dataset trasformato
+
+#### 4.2.3.1. Scelta del miglior numero di cluster k
+
+Come fatto in precedenza per l'algoritmo k-means, in questo capitolo si cercherà di determinare il numero di cluster k utilizzando i metodi elbow. silhouette e della GAP analysis sfruttando la funzione pam.
+
+Vediamo il metodo Elbow.
+
+```{r}
+df_pca <- scale(banknote_pca[, -1])
+fviz_nbclust(df_ridotto, pam, method = "wss") +
+  geom_vline(xintercept = 2, linetype = 2)+
+  labs(subtitle = "Elbow method")
+```
+
+Il metodo Silhouette.
+
+```{r}
+fviz_nbclust(df_pca, pam, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+```
+
+Ed infine la GAP analysis:
+```{r}
+set.seed(123)
+fviz_nbclust(df_pca, pam, nstart = 25, method = "gap_stat", nboot = 50)+
+  labs(subtitle = "Gap statistic method")
+```
+
+```{r}
+pam.res <- pam(df_pca, 2)
+print(pam.res)
+
+dd <- cbind(banknote, cluster = pam.res$cluster)
+head(dd, n = 8)
+
+pam.res$medoids
+
+head(pam.res$clustering)
+
+cl <- pam.res$clustering
+pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
+```
+
+Come previsto, i cluster risultano molto simili.
+
+```{r}
+fviz_cluster(pam.res,
+             palette = c("#00AFBB", "#FC4E07"),
+             ellipse.type = "t",
+             repel = TRUE,
+             ggtheme = theme_classic()
+)
+```
+ 
+TODO: da rivedere tutto
+
+### 4.2.1 Dataset completo
+
 In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-medoids con k impostato a 2.
 
 Come in precedenza, si analizzano prima i grafici a dispersione e successivamente i due cluster.
