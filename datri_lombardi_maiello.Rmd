@@ -172,8 +172,7 @@ L'algoritmo VAT produce una matrice di dissimilarità ordinata, ottenuta riorgan
 p1 <- fviz_dist(dist(banknote), show_labels = FALSE) + labs(title = "Banknote data")
 p2 <- fviz_dist(dist(random_df), show_labels = FALSE) + labs(title = "Random data")
 
-#TODO: non tovo grid.arrange
-#grid.arrange(p1, p2, ncol = 2, widths = c(6, 6))
+grid.arrange(p1, p2, ncol = 2, widths = c(6, 6))
 ```
 TODO: sintetizzare
 Nei grafici VAT il rosso indica alta similarità (ossia bassa dissimilarità), mentre il blu indica bassa similarità (ossia alta dissimilarità).
@@ -1222,7 +1221,6 @@ data_scaled <- scale(data)
 set.seed(123)
 km_model <- kmeans(data_scaled, centers = 2, nstart = 25)
 pam_model <- pam(data_scaled, k = 2, nstart = 25)
-#TODO: verificare se ward.D2 è il migliore
 hc_model <- hclust(dist(data_scaled, method = "euclidean"), method = "ward.D2")
 diana_model <- diana(data_scaled)
 gmm_model <- Mclust(data_scaled, G = 2)
@@ -1330,7 +1328,6 @@ data_scaled <- scale(data)
 set.seed(123)
 km_model <- kmeans(data_scaled, centers = 2, nstart = 25)
 pam_model <- pam(data_scaled, k = 2, nstart = 25)
-#TODO: verificare se ward.D2 è il migliore
 hc_model <- hclust(dist(data_scaled, method = "euclidean"), method = "ward.D2")
 diana_model <- diana(data_scaled)
 gmm_model <- Mclust(data_scaled, G = 2)
