@@ -24,8 +24,6 @@ for (pkg in packages) {
 
 ```
 
----
-\newpage
 # 1. Introduzione
 
 Il presente progetto si propone di applicare diverse tecniche di clustering al dataset **banknote** al fine di identificare gruppi omogenei presenti nei dati e confrontare l'efficacia dei vari metodi. L'analisi intende mettere in pratica le metodologie apprese nel modulo di *Data Analysis & Statistical Learning*, in particolare, verranno trattati i seguenti algoritmi di clustering: **Clustering Gerarchico Agglomerativo e Divisivo**, **Clustering Partizionale (K-means e K-medoids)** e **Clustering Model-based (Mixture of Gaussian)**.  
@@ -44,8 +42,6 @@ Il documento è organizzato nei seguenti capitoli:
 4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).
 5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.
 
----
-\newpage
 # 2. Descrizione e analisi del dataset
 
 In questa sezione esamineremo il dataset **banknote** per comprenderne la struttura, le caratteristiche e le relazioni tra le variabili. Il dataset proviene dal pacchetto `mclust` e contiene misure che possono essere utilizzate per distinguere tra banconote autentiche e false (o per altri scopi diagnostici).
@@ -280,8 +276,6 @@ fviz_contrib(pca_result, choice = "var", axes = 2)
 ```
 Notiamo che la variabile `Length` ha contribuito più del 60% alla seconda componente principale.
 
----
-\newpage
 # 3. Clustering gerarchico
 
 ## 3.1 Clustering Gerarchico Agglomerativo
@@ -573,8 +567,6 @@ final_bd <- eclust(banknote_bd_scaled, "hclust", k = 2, hc_metric = "euclidean",
 fviz_cluster(final_bd, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
 ```
 
----
-\newpage
 # 4. Clustering Partizionale
 
 In questo capitolo analizzeremo,  il clustering parziale che è una tecnica di apprendimento non supervisionato che mira a suddividere un dataset in gruppi distinti, detti cluster, senza sovrapposizioni. A differenza del clustering gerarchico, che costruisce una struttura ad albero, il clustering parziale assegna ogni punto dati a un unico cluster, ottimizzando un criterio di similarità.
@@ -610,7 +602,7 @@ fviz_nbclust(df, kmeans, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 ```
 
-Ed infine la GAP analysis:
+Ed infine il GAP statistic method:
 ```{r}
 set.seed(123)
 fviz_nbclust(df, kmeans, nstart = 25, method = "gap_stat", nboot = 50)+
@@ -627,22 +619,33 @@ fviz_cluster(km.res, geom = "point", ellipse.type = "norm",
 
 #### 4.1.1.2. Validazione
 
-Commento
+Valutiamo la qualità del clustering prodotto dall'algoritmo k-means calcolando il **silhouette score**, il **Dunn index**, il **Corrected Rand Index** e il **Meila’s VI index**.
+
 ```{r}
 fviz_silhouette(km.res, palette = "jco",
                 ggtheme = theme_classic())
 ```
+Un valore silhouette medio di 0.38 indica una qualità di clustering moderata, ma non particolarmente forte.  
+Calcoliamo adesso il dunn index.
+
 ```{r}
 km_stats <- cluster.stats(distanze, km.res$cluster)
 km_stats$dunn                           
 ```
+Un Dunn index pari a 0.1124569 suggerisce che la qualità del clustering non è particolarmente elevata.  
+Passiamo a calcolare il corrected rand index.
 ```{r}
 clust_stats <- cluster.stats(distanze, status, km.res$cluster)
 clust_stats$corrected.rand
 ```
+
+Un Corrected Rand Index di 0.8456292 indica un'elevata concordanza tra la partizione ottenuta dal clustering e la classificazione di riferimento.  
+Infine, calcoliamo il Meila's VI index.
 ```{r}
 clust_stats$vi
 ```
+
+Un Meila’s VI index di 0.2819728 indica una discreta somiglianza tra la partizione ottenuta dal clustering e quella di riferimento.
 
 ### 4.1.2 Dataset ridotto
 
@@ -669,7 +672,7 @@ fviz_nbclust(df_ridotto, kmeans, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 ```
 
-Ed infine la GAP analysis:
+Ed infine il GAP statistic method:
 
 ```{r}
 set.seed(123)
@@ -686,22 +689,36 @@ fviz_cluster(km.res, geom = "point", ellipse.type = "norm",
 ```
 
 #### 4.1.2.2. Validazione
-Commento
+
+Procediamo, anche nel caso del dataset ridotto, a valutare la qualità del clustering k-means calcolando gli indici il **silhouette score**, il **Dunn index**, il **Corrected Rand Index** e il **Meila’s VI index**.
+
 ```{r}
 fviz_silhouette(km.res, palette = "jco",
                 ggtheme = theme_classic())
 ```
+
+Un average silhouette width di 0.62 indica una buona qualità del clustering. Questo valore suggerisce che, in media, i punti sono ben assegnati ai loro cluster, con una chiara separazione rispetto agli altri gruppi.
+Procediamo a calcolare il dunn index.  
 ```{r}
 km_stats <- cluster.stats(distanze, km.res$cluster)
 km_stats$dunn                           
 ```
+
+Un Dunn index pari a 0.1427453 suggerisce che la qualità del clustering non è particolarmente elevata.
+Continuiamo con il calcolo dell Corrected Rand Index.
 ```{r}
 clust_stats <- cluster.stats(distanze, status, km.res$cluster)
 clust_stats$corrected.rand
 ```
+
+Essendo molto vicino a 1, suggerisce che quasi tutte le coppie di osservazioni sono state correttamente assegnate allo stesso cluster o a cluster diversi in entrambe le partizioni.
+Procediamo a calcolare l'ultimo indice.
+
 ```{r}
 clust_stats$vi
 ```
+
+Anche qui il valore indica una somiglianza molto elevata tra la partizione ottenuta dal clustering e quella di riferimento..
 
 ### 4.1.3 Dataset trasformato
 
@@ -728,7 +745,7 @@ fviz_nbclust(df_pca, kmeans, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 ```
 
-Ed infine la GAP analysis:
+Ed infine il GAP statistic method:
 
 ```{r}
 set.seed(123)
@@ -753,7 +770,9 @@ legend("topright", legend = unique(clusters), col = unique(clusters), pch = 19, 
 ```
 
 #### 4.1.3.2. Validazione
-Commento
+
+Procediamo, anche nel caso del dataset ridotto, a valutare la qualità del clustering k-means calcolando gli indici il **silhouette score**, il **Dunn index**, il **Corrected Rand Index** e il **Meila’s VI index**.
+
 ```{r}
 fviz_silhouette(final_pca, palette = "jco",
                 ggtheme = theme_classic())
@@ -771,7 +790,6 @@ clust_stats$vi
 ```
 
 ## 4.2 K-Medoids 
-TODO: da rivedere tutto
 
 ### 4.2.1 Dataset completo
 
@@ -794,27 +812,11 @@ fviz_nbclust(df, pam, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 ```
 
-Ed infine la GAP analysis:
+Ed infine il GAP statistic method:
 ```{r}
 set.seed(123)
 fviz_nbclust(df, pam, nstart = 25, method = "gap_stat", nboot = 50)+
   labs(subtitle = "Gap statistic method")
-```
-
-Tutti metodi suggeriscono che il numero ottimale dei cluster è pari a 2. 
-
-```{r}
-pam.res <- pam(df, 2)
-
-dd <- cbind(banknote, cluster = pam.res$cluster)
-head(dd, n = 8)
-
-pam.res$medoids
-
-head(pam.res$clustering)
-
-cl <- pam.res$clustering
-pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
 ```
 
 Come previsto, i cluster risultano molto simili.
@@ -827,22 +829,36 @@ fviz_cluster(pam.res, geom = "point", ellipse.type = "norm",
 
 #### 4.2.1.2. Validazione
 
-Commento
+Valutiamo la qualità del clustering prodotto dall'algoritmo k-medoids calcolando il **silhouette score**, il **Dunn index**, il **Corrected Rand Index** e il **Meila’s VI index**.  
 ```{r}
 fviz_silhouette(pam.res, palette = "jco",
                 ggtheme = theme_classic())
 ```
+
+Un valore silhouette medio di 0.38 indica una qualità di clustering moderata, ma non particolarmente forte.  
+Calcoliamo adesso il dunn index.
+
 ```{r}
 pam_stats <- cluster.stats(distanze, pam.res$cluster)
 pam_stats$dunn                           
 ```
+
+Un Dunn index pari a 0.1299438 suggerisce che la qualità del clustering non è particolarmente elevata.  
+Passiamo a calcolare il corrected rand index.
+
 ```{r}
 clust_stats <- cluster.stats(distanze, status, pam.res$cluster)
 clust_stats$corrected.rand
 ```
+
+Un Corrected Rand Index di 0.9406018 indica un livello di concordanza molto alto tra la partizione generata dal clustering e quella di riferimento.
+Procediamo a a calcolare il Meila's VI index.
+
 ```{r}
 clust_stats$vi
 ```
+
+Anche in questo caso, il risultato indica una buona somiglianza tra la partizione ottenuta dal clustering e quella di riferimento.
 
 ### 4.2.2 Dataset ridotto
 
@@ -866,7 +882,7 @@ fviz_nbclust(df_ridotto, pam, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 ```
 
-Ed infine la GAP analysis:
+Ed infine il GAP statistic method:
 ```{r}
 set.seed(123)
 fviz_nbclust(df_ridotto, pam, nstart = 25, method = "gap_stat", nboot = 50)+
@@ -876,24 +892,6 @@ fviz_nbclust(df_ridotto, pam, nstart = 25, method = "gap_stat", nboot = 50)+
 Anche in questo caso il numero ottimale di cluster è 2.
 
 ```{r}
-df_ridotto <- df[, c("Bottom", "Diagonal")]
-pam.res <- pam(df_ridotto, 2)
-print(pam.res)
-
-dd <- cbind(banknote, cluster = pam.res$cluster)
-head(dd, n = 8)
-
-pam.res$medoids
-
-head(pam.res$clustering)
-
-cl <- pam.res$clustering
-pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
-```
-
-Come previsto, i cluster risultano molto simili.
-
-```{r}
 pam.res <- eclust(df_ridotto, "pam", k = 2, nstart = 25, graph = FALSE)
 fviz_cluster(pam.res, geom = "point", ellipse.type = "norm",
              palette = "jco", ggtheme = theme_minimal())
@@ -901,16 +899,21 @@ fviz_cluster(pam.res, geom = "point", ellipse.type = "norm",
 
 #### 4.2.1.2. Validazione
 
-Commento
+Si procede alla validazione del dataset ridotto calcolando gli indici come fatto nei capitoli precedenti.
+
 ```{r}
 fviz_silhouette(pam.res, palette = "jco",
                 ggtheme = theme_classic())
 ```
 
+Il risultato è identico al quello calcolato per il k-means stando ad indicare che l'algoritmo riesce a fare una buona clusterizzazione.
+
 ```{r}
 pam_stats <- cluster.stats(distanze, pam.res$cluster)
 pam_stats$dunn                           
 ```
+
+I risultati sono identici a quelli del k-means e valgono le medesime interpretazioni.
 
 ```{r}
 clust_stats <- cluster.stats(distanze, status, pam.res$cluster)
@@ -943,29 +946,13 @@ fviz_nbclust(df_pca, pam, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 ```
 
-Ed infine la GAP analysis:
+Ed infine il GAP statistic method:
 ```{r}
 set.seed(123)
 fviz_nbclust(df_pca, pam, nstart = 25, method = "gap_stat", nboot = 50)+
   labs(subtitle = "Gap statistic method")
 ```
 
-```{r}
-pam.res <- pam(df_pca, 2)
-print(pam.res)
-
-dd <- cbind(banknote, cluster = pam.res$cluster)
-head(dd, n = 8)
-
-pam.res$medoids
-
-head(pam.res$clustering)
-
-cl <- pam.res$clustering
-pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
-```
-
-Come previsto, i cluster risultano molto simili.
 
 ```{r}
 final_pca <- eclust(df_pca, "pam", k = 2, nstart = 25, graph = FALSE)
@@ -1002,122 +989,6 @@ clust_stats$corrected.rand
 clust_stats$vi
 ```
 
-### 4.2.1 Dataset completo
-
-In questo capitolo i cluster vengono creati utilizzando l'algoritmo k-medoids con k impostato a 2.
-
-Come in precedenza, si analizzano prima i grafici a dispersione e successivamente i due cluster.
-
-```{r}
-head(df, n = 3)
-
-pam.res <- pam(df, 2)
-print(pam.res)
-
-dd <- cbind(banknote, cluster = pam.res$cluster)
-head(dd, n = 8)
-
-pam.res$medoids
-
-head(pam.res$clustering)
-
-cl <- pam.res$clustering
-pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
-```
-
-Come previsto, i cluster risultano molto simili.
-
-```{r}
-fviz_cluster(pam.res,
-             palette = c("#00AFBB", "#FC4E07"),
-             ellipse.type = "t",
-             repel = TRUE,
-             ggtheme = theme_classic()
-)
-```
-
-### 4.2.2 Dataset ridotto
-
-```{r}
-df_ridotto <- df[, c("Bottom", "Diagonal")]
-pam.res <- pam(df_ridotto, 2)
-print(pam.res)
-
-dd <- cbind(banknote, cluster = pam.res$cluster)
-head(dd, n = 8)
-
-pam.res$medoids
-
-head(pam.res$clustering)
-
-cl <- pam.res$clustering
-pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
-```
-
-Come previsto, i cluster risultano molto simili.
-
-```{r}
-fviz_cluster(pam.res,
-             palette = c("#00AFBB", "#FC4E07"),
-             ellipse.type = "t",
-             repel = TRUE,
-             ggtheme = theme_classic()
-)
-```
-
-### 4.2.3 Dataset trasformato
-
-```{r}
-df_pca <- scale(banknote_pca[, -1])
-pam.res <- pam(df_pca, 2)
-print(pam.res)
-
-dd <- cbind(banknote, cluster = pam.res$cluster)
-head(dd, n = 8)
-
-pam.res$medoids
-
-head(pam.res$clustering)
-
-cl <- pam.res$clustering
-pairs(df, gap=0, pch=cl, col=c("#00AFBB", "#FC4E07")[cl])
-```
-
-Come previsto, i cluster risultano molto simili.
-
-```{r}
-fviz_cluster(pam.res,
-             palette = c("#00AFBB", "#FC4E07"),
-             ellipse.type = "t",
-             repel = TRUE,
-             ggtheme = theme_classic()
-)
-```
-
-### 4.3 Scelta automatica del miglior algoritmo di clustering
-```{r}
-# library(clValid)
-# 
-# clmethods <- c("hierarchical", "kmeans","pam")
-# intern <- clValid(df, 2:10, clmethods, "internal")
-# intern <- clValid(df_ridotto, nClust = 2:10, clmethods, "internal")
-# intern <- clValid(df_pca, 2:10, clmethods, "internal")
-# summary(intern)
-# 
-# stab <- clValid(df, 2:10, clmethods, "stability")
-# summary(stab)
-# 
-# stab2 <- clValid(df_ridotto, 2:10, clmethods, "stability")
-# summary(stab2)
-# optimalScores(stab2)
-# 
-# stab3 <- clValid(df_pca, 2:10, clmethods, "stability")
-# summary(stab3)
-# optimalScores(stab3)
-```
-
----
-\newpage
 # 5. Clustering Model-based: Mixture of Gaussian
 
 In questa sezione introduciamo l'applicazione del clustering basato su misture di gaussiane, utilizzando la funzione `Mclust` del pacchetto **mclust**. Questo approccio assume che i dati siano generati da una combinazione di distribuzioni gaussiane e, tramite l'algoritmo EM (Expectation-Maximization), stima i parametri di ciascuna componente. Il vantaggio principale di questo metodo è la capacità di modellare cluster con forme ellissoidali, permettendo di gestire anche cluster con sovrapposizioni. Inoltre, `Mclust` effettua una selezione automatica del numero ottimale di cluster e del modello di covarianza (parsimonioso) in base al criterio BIC, fornendo un'indicazione della bontà dell'adattamento e della complessità del modello.  
@@ -1197,9 +1068,6 @@ summary(gmm_result3)
 ```
 
 Anche in questo caso, i valori di BIC e ICL sono concordi: per un numero di cluster pari a 3 si ottiene un BIC di circa -1630 e un ICL di -1657, mentre per 2 cluster il BIC risulta attorno a -1614 e l'ICL a -1616. Questo dimostra che anche l'ICL suggerisce che il modello ottimale è quello con 2 cluster.  
-
----
-\newpage
 
 # 6. Classificazione con gli algoritmi di cluster
 
@@ -1563,8 +1431,6 @@ Rispetto ai risultati con il dataset completo o ridotto, l'uso di solo 3 variabi
 
 In conclusione, dal punto di vista della misurazione delle performance con tecniche esterne (avendo a disposizione la vera classe delle osservazioni), l'algoritmo **GMM** è risultato il migliore nei tre diversi dataset, anche se, tutto sommato, gli altri algoritmi non hanno ottenuto dei cattivi risultati.
 
----
-\newpage
 # 7. Conclusioni
 
 Questo progetto, realizzato a scopo didattico, ha analizzato diverse tecniche di clustering applicate al dataset *banknote*, un dataset semplice con due classi ben distinte. Inizialmente sono state utilizzate misure interne quali il BIC, l'indice silhouette e altre metriche di compattezza per valutare la qualità dei cluster senza ricorrere alle etichette reali. Successivamente, l'analisi è stata estesa con misure esterne (Adjusted Rand Index, accuratezza, sensibilità, specificità e AUC) per confrontare le assegnazioni dei cluster con la vera classe delle osservazioni.
