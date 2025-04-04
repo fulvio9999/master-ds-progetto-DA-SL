@@ -1456,7 +1456,7 @@ Questa configurazione semplifica il modello senza perdere accuratezza, dimostran
 - K-means, K-medoids e GMM ottengono ARI 0.98, accuracy 99.5% e AUC ~1, confermando che queste due variabili sono altamente discriminative.  
 - GMM raggiunge sensibilità 100%, identificando tutte le banconote contraffatte, mentre K-means e K-medoids garantiscono specificità 100%, evitando falsi positivi.  
 
-## 6.3. Dataset ridotto
+## 6.3. Dataset trasformato
 
 Nel seguente codice, applichiamo i diversi algoritmi di clustering al dataset trasformato (con le variabili trasformate mediante tecnica PCA) con i migliori parametri calcolati in precedenza (fissando il numero di cluster a 2) e aggiungiamo al dataframe le colonne corrispondenti alle assegnazioni di ciascun metodo.
 
