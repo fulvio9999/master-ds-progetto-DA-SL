@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(message=FALSE, warning=FALSE, fig.align = "center")
 
-packages <- c("mclust", "reshape2", "ggplot2", "GGally", "dplyr", "clustertend", "cluster", "FNN", "FactoMineR", "factoextra", "caret", "pheatmap", "clusterCrit", "NbClust", "fpc", "scatterplot3d")
+packages <- c("mclust", "reshape2", "ggplot2", "GGally", "dplyr", "clustertend", "cluster", "FNN", "FactoMineR", "factoextra", "caret", "pheatmap", "clusterCrit", "NbClust", "fpc", "scatterplot3d", "gridExtra")
 
 for (pkg in packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -22,19 +22,19 @@ for (pkg in packages) {
 
 Il presente progetto si propone di applicare diverse tecniche di clustering al dataset **banknote** al fine di identificare gruppi omogenei presenti nei dati e confrontare l'efficacia dei vari metodi. L'analisi intende mettere in pratica le metodologie apprese nel modulo di *Data Analysis & Statistical Learning*, in particolare, verranno trattati i seguenti algoritmi di clustering: **Clustering Gerarchico Agglomerativo e Divisivo**, **Clustering Partizionale (K-means e K-medoids)** e **Clustering Model-based (Mixture of Gaussian)**.  
  
-Tali algoritmo sono stati valutati su tre diverse tipologie di dataset:  
-- **Dataset Completo:** utilizzo di tutte le variabili disponibili.  
-- **Dataset Ridotto:** uso esclusivo delle variabili “Bottom” e “Diagonal”, individuate come le più discriminative.  
-- **Dataset Trasformato:** applicazione della PCA per ridurre le variabili a componenti che sintetizzano l’informazione.  
+Tali algoritmo sono stati valutati su tre diverse tipologie di dataset:
+- **Dataset Completo:** utilizzo di tutte le variabili disponibili.
+- **Dataset Ridotto:** uso esclusivo delle variabili “Bottom” e “Diagonal”, individuate come le più discriminative.
+- **Dataset Trasformato:** applicazione della PCA per ridurre le variabili a componenti che sintetizzano l'informazione.
  
-Per ciascuna configurazione, sono state valutate le performance dei metodi di clustering mediante metriche interne ed esterne.  
+Per ciascuna configurazione, sono state valutate le performance dei metodi di clustering mediante metriche interne ed esterne.
 Il documento è organizzato nei seguenti capitoli:
  
-1.  **Introduzione**: Presentazione del progetto, degli obiettivi e del contesto.  
+1.  **Introduzione**: Presentazione del progetto, degli obiettivi e del contesto.
 2.  **Descrizione del Dataset e Analisi Esplorativa**: Esplorazione preliminare dei dati, analisi descrittiva e operazioni di preprocessing, tra cui la costruzione del dataset trasformato mediante la tecnica PCA.  
-3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei metodi di clustering (gerarchico, partizionale e model-based).  
-4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).  
-5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.  
+3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei metodi di clustering (gerarchico, partizionale e model-based).
+4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).
+5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.
 
 # 2. Descrizione e analisi del dataset
 
@@ -76,6 +76,7 @@ library("scatterplot3d")
 library("corrplot")
 library("cluster")
 library("pROC")
+library("gridExtra")
 ```
 
 Carichiamo il dataset.
@@ -105,7 +106,7 @@ Controlliamo se ci sono valori mancanti nelle colonne.
 ```{r missing values}
 colSums(is.na(banknote))
 ```
-Come possiamo vedere nessuna colonna presenta valori mancanti.  
+Come possiamo vedere nessuna colonna presenta valori mancanti.
 Per avere una prima idea delle relazioni tra le variabili, creiamo una matrice di scatterplot. Utilizziamo la colonna `Status` per colorare i punti.
 
 ```{r scatterplot}
@@ -136,11 +137,9 @@ Prima di applicare gli algoritmi di clustering, è fondamentale verificare se il
 
 ### 2.1.1. Hopkins statistics
 
-TODO: sintetizzare
 L'Hopkins Statistic è una misura utilizzata per valutare la tendenza di un dataset alla clusterizzazione, confrontando la sua struttura con quella di un insieme di punti generati casualmente.
-Assume valori compresi tra 0 e 1.
-Valori vicini a 0 indicano che il dataset è altamente strutturato in cluster, suggerendo che l’applicazione di algoritmi di clustering può essere efficace.
-Valori vicini a 0.5 o superiori suggeriscono che i dati sono distribuiti in modo casuale o uniforme, e il clustering potrebbe non essere significativo.
+Assume valori compresi tra 0 e 1, più il valore è vicino allo 0 più il dataset è strutturato in cluster.
+
 ```{r}
 banknote_num <- banknote[, -1]
 
@@ -174,12 +173,9 @@ p2 <- fviz_dist(dist(random_df), show_labels = FALSE) + labs(title = "Random dat
 
 grid.arrange(p1, p2, ncol = 2, widths = c(6, 6))
 ```
-TODO: sintetizzare
+
 Nei grafici VAT il rosso indica alta similarità (ossia bassa dissimilarità), mentre il blu indica bassa similarità (ossia alta dissimilarità).
-Relativamente al grafico del dataset banknote, notiamo che lungo la diagonale sono presenti regioni rosse che indicano dati simili tra loro, suggerendo la presenza di cluster.
-La presenza di zone blu che evidenziano una maggiore dissimilarità tra gruppi di dati, supporta l'ipotesi che esistano cluster distinti nel dataset.
-Inoltre la presenza di transizioni marcate dal rosso al blu conferma che esistono confini ben definiti tra i cluster.
-Notiamo invece come nel dataset randomico non c'è alcuna struttura a cluster evidente. I dati appaiono disordinati e non presenteranno raggruppamenti chiari, il che indica che un clustering non ha senso o che i dati non sono adatti per essere separati in gruppi distinti.
+Nel grafico del dataset banknote, notiamo che lungo la diagonale sono presenti regioni rosse che indicano dati simili tra loro, suggerendo la presenza di cluster. Al contrario, il dataset randomico appare privo di struttura.
 
 Possiamo concludere che il dataset Banknote ha una tendezza alla clusterizzazione, procediamo perciò con il calcolo della PCA e successivamente alla clusterizzazione.
 
@@ -256,21 +252,27 @@ fviz_pca_var(pca_result, col.var = "contrib",
             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
 ```
 Questo passaggio ci offre una visione immediata di come ogni variabile contribuisce alle componenti principali e della loro interrelazione.
+Osserviamo che le variaibili che appaiono con colori più accesi sono `Length` che contribuisce molto a Dim.2, e le variabili `Diagonal`, `Left` e `Right` con un contributo importante a Dim.1 seppure opposto.
 
 Approfondiamo l'analisi mostrando i contributi delle variabili attraverso diversi metodi grafici, in modo da identificare quali variabili influenzano maggiormente ciascuna componente.
 ```{r}
 corrplot(var$contrib, is.corr=FALSE)
 ```
 L'analisi dei contributi evidenzia il peso relativo di ciascuna variabile nelle componenti principali, utile per interpretare i risultati della PCA.
+Si osserva che `Length` e `Top` hanno contributi particolarmente elevati rispettivamente a Dim.2 e Dim.3.
 
-Visualizziamo i contributi delle variabili specificamente per la prima componente principale.
+Approfondiamo come hanno contribuito le variabili per la prima componente principale.
 ```{r}
 fviz_contrib(pca_result, choice = "var", axes = 1)
 ```
+
+Come era visibile già dal grafico precedente, le variabili che hanno contribuito maggiormente alla prima componente principale sono `Diagonal`, `Right`, `Left`.
+
 Similmente al passaggio precedente, visualizziamo i contributi delle variabili per la seconda componente principale.
 ```{r}
 fviz_contrib(pca_result, choice = "var", axes = 2)
 ```
+Notiamo che la variabile `Length` ha contribuito più del 60% alla seconda componente principale.
 
 # 3. Clustering gerarchico
 
@@ -306,76 +308,69 @@ Applichiamo il clustering con metodo di linkage `ward` che generalmente insieme 
 ```{r hierarchical agglomerative clustering hclust}
 hclust_clustering <- hclust(distanze, method = "ward.D2")
 ```
-Guardiamo il dendrogramma cercando di identificare il numero ottimale di cluster. Utilizzeremo poi anche altri metodi che ci premetteranno di prendere una scelta migliore.
+
+Il dendrogramma mostra come le osservazioni si uniscono in cluster, con l'altezza dei rami che riflette la loro dissimilarità. Analizzando il dendrogramma, possiamo decidere il numero di cluster, tagliando l'albero a un'altezza che separa i gruppi in modo significativo.
 
 #### 3.1.1.1. Scelta del miglior numero di cluster k
 
 ```{r hierarchical agglomerative clustering dend}
 fviz_dend(hclust_clustering, show_labels = FALSE, as.ggplot = TRUE)
 ```
-TODO: sintetizzare
-Il dendrogramma risultante mostra come le osservazioni vengono unite progressivamente in cluster. L'altezza dei rami indica la distanza a cui avviene la fusione: rami più bassi corrispondono a fusioni tra punti o cluster molto simili. Analizzando il dendrogramma, possiamo decidere il
-numero di cluster tagliando l'albero a un'altezza che separa i gruppi in modo significativo.
-Dall'osservazione del dendrogramma, si nota un salto particolarmente ampio a un'altezza intorno a 30, il che indica che fino a quella soglia i gruppi sono relativamente compatti e ben separati. Tagliare il dendrogramma a quel livello produrrebbe 2 grandi cluster. Volendo una suddivisione più fine, si può individuare un altro salto meno marcato (intorno a 15) che porterebbe a 3 cluster.
-Procediamo con l'analisi del numero ottimale di cluster utilizzando altri metodi.
+
+Notiamo un ampio salto a circa 30 suggerisce una buona separazione in 2 cluster, mentre un altro salto meno marcato (intorno a 15) ne suggerisce 3.
+Per confermare il numero ottimale di cluster, si prosegue con metodi alternativi.
 
 Osserviamo l'andamento del Total Within Sum of Squares (WSS) rispetto a k, cercando di individuare il punto in cui la curva inizia a “piegarsi” più marcatamente, cioè dove l'aggiunta di ulteriori cluster non porta a una riduzione significativa del WSS. Di seguito il grafico Elbow.
 ```{r hierarchical agglomerative clustering elbow}
 fviz_nbclust(df, FUN = hcut, method = "wss") +
-    geom_vline(xintercept = 3, linetype = 2) +
+    geom_vline(xintercept = 2, linetype = 2) +
     labs(subtitle = "Elbow method")
 ```
-Tra k = 1 e k = 2, la diminuzione del WSS è molto forte (ciò è normale, perché si passa da un unico cluster a due). Tra k = 2 e k = 3, c'è ancora un calo netto del WSS.
-Oltre k = 3, la pendenza inizia a ridursi gradualmente. Dal grafico, sembra che il calo principale avvenga per k = 3, mentre oltre si riduce più lentamente.
-Per k = 3 si ha un notevole miglioramento rispetto a 2, ma passando a 4 (e oltre) il guadagno in termini di riduzione del WSS diventa più contenuto.
+Tra k = 1 e k = 2, la diminuzione del WSS è molto forte, tra k = 2 e k = 3 c'è ancora un calo del WSS ma meno netto.
+Oltre k = 3, la pendenza inizia a ridursi gradualmente. Dal grafico, sembra che il calo principale avvenga per k = 2, mentre oltre si riduce più lentamente.
 
 Analizziamo ora il grafico dell'Average Silhouette Width.
 ```{r hierarchical agglomerative clustering hclust silhouette}
 fviz_nbclust(df, FUN = hcut, method = "silhouette") +
     labs(subtitle = "Silhouette method")
 ```
-TODO: sintetizzare
+
 L'indice di silhouette risulta più alto in corrispondenza di k = 2. Questo suggerisce che la separazione tra i cluster e la coesione interna sia massima quando si dividono i dati in due gruppi.
-Con k = 3, l'indice diminuisce, e oltre tale valore rimane su livelli inferiori (intorno a 0.2-0.3), senza tornare ai valori di picco.
+Da k = 3 l'indice diminuisce senza tornare ai valori di picco.
 
 Osserviamo il grafico del Gap Statistic che confronta la dispersione all'interno dei cluster ottenuta dal clustering, con quella attesa in un dataset generato casualmente (quindi privo di gruppi).
-Ossia calcola la differenza (gap) tra il log della dispersione osservata e quella media attesa sotto una distribuzione nulla.
+
 ```{r hierarchical agglomerative clustering hclust gap statistics}
 set.seed(123)
-fviz_nbclust(df, FUN = hcut, method = "gap_stat", nboot = 500, verbose = FALSE)+
+fviz_nbclust(df, FUN = hcut, method = "gap_stat", nboot = 500, verbose = FALSE) +
     labs(subtitle = "Gap statistic method")
 ```
-TODO: sintetizzare
-Nel grafico, la linea che rappresenta il punto in cui il Gap Statistic non aumenta più in maniera significativa, è su 3 cluster, il che indica che quando i dati vengono divisi in 3 gruppi la struttura di clustering risulta migliore rispetto a quella attesa in un dataset casuale. In altre parole, il modello a 3 cluster spiega meglio la struttura intrinseca dei dati.
 
-Utilizziamo infine il pacchetto `NbClust` che valuta il numero ottimale di cluster utilizzando numerosi indici interni. Tra questi, alcuni indici come l'indice di Hubert e il Dindex vengono visualizzati graficamente.
+Il grafico del Gap Statistic indica che quando il dataset viene diviso in 3 gruppi la struttura di clustering risulta migliore rispetto a quella attesa in un dataset casuale.
+
+Utilizziamo infine il pacchetto `NbClust` che valuta il numero ottimale di cluster utilizzando numerosi indici interni.
 ```{r hierarchical agglomerative clustering hclust NbClust}
-nb <- NbClust(df, distance = "euclidean", min.nc = 2, max.nc= 10, method = "ward.D2")
+pdf(NULL)
+nb <- NbClust(df, distance = "euclidean", min.nc = 2, max.nc = 10, method = "ward.D2")
+dev.off()
 ```
 La decisione finale basata sulla majority rule suggerisce 3 cluster, indicando che, complessivamente, questa soluzione offre una migliore separazione e coesione interna rispetto alle altre soluzioni.
 
-Complessivamente la maggioranza dei metodi analizzati (elbow, gap statistic, nbclust) converge su una soluzione a 3 cluster.
-Pertanto optiamo per una scelta di "maggioranza" e scegliamo perciò un numero di cluster pari a 3.
+Complessivamente la metà dei metodi analizzati (gap statistic, nbclust) converge su una soluzione a 3 cluster, mentre l'altra metà (elbow, e silhouette) converge a 2 cluster.
+Pertanto non possiamo optare per una scelta di "maggioranza", decidiamo di scegliere un numero di cluster pari a 2 poichè il salto più marcato nel dendrogramma indica una forte separazione naturale in 2 gruppi.
 
-Procediamo con il taglio del dendogramma in modo da ottenere 3 cluster. Successivamente visualizziamo una tabella di frequenza che mostra il numero di osservazioni assegnate a ciascun cluster, permettendoci di verificare la distribuzione dei dati tra i 3 cluster ottenuti.
+Procediamo con il taglio del dendogramma in modo da ottenere 2 cluster. Successivamente visualizziamo una tabella di frequenza che mostra il numero di osservazioni assegnate a ciascun cluster, permettendoci di verificare la distribuzione dei dati tra i 3 cluster ottenuti.
 ```{r hierarchical agglomerative clustering hclust cut}
-cluster_cut <- cutree(hclust_clustering, k = 3)
+cluster_cut <- cutree(hclust_clustering, k = 2)
 
 table(cluster_cut)
 
-fviz_dend(hclust_clustering, k = 3,
+fviz_dend(hclust_clustering, k = 2,
         cex = 0.5,
-        k_colors = c("#2E9FDF", "#00AFBB", "#E7B800", "#FC4E07"),
+        k_colors = c("#2E9FDF", "#E7B800"),
         color_labels_by_k = TRUE,
         rect = TRUE
 )
-```
-La maggior parte dei dati è stata assegnata ai primi due cluster, mentre il terzo cluster contiene un numero significativamente minore di osservazioni. Questo potrebbe suggerire che il cluster 3 rappresenta un gruppo più piccolo, con caratteristiche potenzialmente diverse o più specifiche rispetto ai gruppi più grandi.
-
-Vediamo i risultati di clustering nello spazio originale, tramite la matrice di scatterplot a coppie con i punti colorati in base ai cluster di appartenenza.
-```{r hierarchical agglomerative clustering hclust pairs}
-ggpairs(df, aes(color = as.factor(cluster_cut))) +
-  ggtitle("Matrice Pairwise Scatterplot con Cluster")
 ```
 
 #### 3.1.1.2. Validazione
@@ -387,7 +382,7 @@ Iniziamo con la metrica della silhouette media (calcolata come la media di s(i) 
 sil <- silhouette(cluster_cut, distanze)
 fviz_silhouette(sil, palette = "jco", ggtheme = theme_classic())
 ```
-Un valore di 0.31 suggerisce che la struttura dei cluster non è particolarmente forte: c'è una separazione moderata, ma c'è anche una certa sovrapposizione tra i cluster.
+Un valore di 0.37 suggerisce che la struttura dei cluster non è particolarmente forte: c'è una separazione moderata, ma c'è anche una certa sovrapposizione tra i cluster.
 
 Analizziamo ora il Dunn Index, che valuta la separazione tra i cluster rispetto alla loro compattezza, cioè quanto i cluster siano ben separati e internamente compatti.
 Se i dati contengono cluster compatti e ben separati, ci si aspetta che il diametro dei cluster sia piccolo e che la distanza tra i cluster sia grande.
@@ -400,7 +395,7 @@ dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
 print(paste("Dunn Index:", dunn_index))
 ```
 
-Un Dunn Index di 0.125 indica che i cluster hanno una separazione piuttosto bassa rispetto alla loro coesione interna. Una bassa separazione tra cluster suggerisce possibili problemi di sovrapposizione.
+Un Dunn Index di 0.210 indica che i cluster hanno una separazione piuttosto bassa rispetto alla loro coesione interna, suggerendo possibili problemi di sovrapposizione.
 
 Analizziamo il Corrected Rand Index che misura quanto bene il clustering ottenuto corrisponde a una partizione di riferimento. Nel nostro caso utilizziamo la colonna `Status` del dataset.
 Ed infine il Meila's Variation of Information (VI) Index che misura quanto due cluster differiscono tra loro in termini di entropia. A differenza del Corrected Rand Index, che valuta la similarità, il VI Index misura la distanza tra due partizioni (va perciò minimizzato).
@@ -410,18 +405,17 @@ clust_stats <- cluster.stats(d = dist(df), status, cluster_cut)
 print(paste("Corrected Rand Index:", clust_stats$corrected.rand))
 print(paste("Meila's Index:", clust_stats$vi))
 ```
-TODO: sintetizzare
-Un Corrected Rand Index di 0.792 indica che il clustering è molto simile alla vera classificazione dei dati.
-Un Meila's Variation of Information Index di 0.359 è un valore relativamente basso, il che significa che i cluster trovati non sono troppo distanti dalla struttura effettiva dei dati.
-Il fatto che il Corrected Rand Index sia alto (0.792) e il VI Index sia basso conferma che il clustering ha una buona coerenza con la partizione reale.
-Tuttavia, poiché Dunn Index e Silhouette suggeriscono che la separazione tra cluster è debole, questo potrebbe indicare sovrapposizione tra i cluster, ma senza compromettere eccessivamente la qualità dell'assegnazione.
+
+Un Corrected Rand Index di 0.9602 è molto elevato, il che indica che il clustering ottenuto corrisponde molto bene alla partizione di riferimento.
+Inoltre, un Information Index di 0.098 è basso, suggerendo che la differenza informativa tra le partizioni è minima.
+
+Concludendo ci potrebbe essere sovrapposizione tra i cluster, ma senza compromettere eccessivamente la qualità dell'assegnazione.
 
 #### 3.2.1.3. Ottimizzazione
 
-TODO: sintetizzare
-Ottimizziamo il clustering esplorando diverse combinazioni di metodi di linkage e numeri di cluster. Per ciascuna combinazione, calcoliamo le quattro metriche di valutazione precedentemente analizzate, ottenendo un dataframe con tutti i risultati.
-Successivamente, identifichiamo il metodo di clustering migliore per ciascuna metrica. Poiché le diverse metriche potrebbero suggerire metodi differenti, assegniamo un ranking a ciascuna di esse e calcoliamo un ranking totale sommando i punteggi (invertendo il criterio per le metriche da massimizzare).
-Infine, ordiniamo i risultati e selezioniamo la combinazione con il punteggio complessivo più basso, individuando così il miglior clustering in base a tutte le metriche disponibili.
+Ottimizziamo il clustering esplorando diverse combinazioni di metodi di linkage e numero di cluster. Valutiamo ciascuna combinazione mediante le metriche viste prima.
+Successivamente, assegniamo un ranking per ciascuna metrica (invertendo il criterio per quelle da massimizzare) e sommiamo i punteggi.
+Infine, ordiniamo i risultati e selezioniamo la combinazione con il punteggio complessivo più basso come miglior clustering.
 
 ```{r hierarchical agglomerative clustering linkage methods}
 evaluate_clustering <- function(df, distanze, status, linkage_methods = c("ward.D2", "single", "complete", "average", "centroid"), min_k = 2, max_k = 10) {
@@ -438,16 +432,11 @@ evaluate_clustering <- function(df, distanze, status, linkage_methods = c("ward.
         
         for(k in min_k:max_k) {
             cluster_cut <- cutree(hclust_obj, k = k)
-            
             sil <- silhouette(cluster_cut, distanze)
             avg_sil <- mean(sil[, 3])
-            
             dunn_index <- intCriteria(as.matrix(df), cluster_cut, "Dunn")$dunn
-            
             clust_stats <- cluster.stats(distanze, status, cluster_cut)
-
             corrected_rand <- clust_stats$corrected.rand
-
             vi_val <- clust_stats$vi
             
             results_all <- rbind(results_all, data.frame(Method = method,
@@ -482,26 +471,22 @@ results_ranked <- results_all %>%
     rank_sil = rank(-Silhouette, ties.method = "min"),
     rank_dunn = rank(-Dunn, ties.method = "min"),
     rank_corrected_rand = rank(-Corrected_Rand, ties.method = "min"),
-    
     rank_vi = rank(VI, ties.method = "min"),
-    
     total_rank = rank_sil + rank_dunn + rank_corrected_rand + rank_vi
   )
 
 best_overall <- results_ranked %>% arrange(total_rank) %>% head(1)
 print(best_overall)
 ```
-Il risultato mostra che il clustering ottimale secondo queste metriche è Ward.D2 con 2 cluster, poiché bilancia al meglio la coesione, la separazione e la corrispondenza con la verità di riferimento.
+Il risultato mostra che il clustering ottimale secondo queste metriche è Ward.D2 con 2 cluster, che è la combinazione che abbiamo testato precedentemente.
 La combinazione scelta restituisce i valori migliori possibili per le metriche Silhouette, Corrected Rand Index e VI (Rank 1), mentre risulta meno performante rispetto ad altri metodi, ma compensato dagli altri punteggi, per il Dunn Index (Rank 21).
 
-Effettuiamo il clustering con la combinazione risultante e visualizziamo mediante il grafico i cluster ottenuti.
+Visualizziamo i cluster ottenuti.
 ```{r hierarchical agglomerative clustering eclust}
-final <- eclust(df, "hclust", k = 2, hc_metric = "euclidean", hc_method = "ward.D2", graph = FALSE)
-
-fviz_cluster(final, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
+fviz_cluster(list(data = df, cluster = cluster_cut), geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
 ```
 
-### 3.1.2. Dataset tradformato
+### 3.1.2. Dataset trasformato
 
 Vediamo come cambia il clustering se invece che considerare tutte le variabili del dataset, consideriamo solo le tre componenti principali trovate prima.
 
