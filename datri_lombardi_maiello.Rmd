@@ -24,6 +24,8 @@ for (pkg in packages) {
 
 ```
 
+---
+\newpage
 # 1. Introduzione
 
 Il presente progetto si propone di applicare diverse tecniche di clustering al dataset **banknote** al fine di identificare gruppi omogenei presenti nei dati e confrontare l'efficacia dei vari metodi. L'analisi intende mettere in pratica le metodologie apprese nel modulo di *Data Analysis & Statistical Learning*, in particolare, verranno trattati i seguenti algoritmi di clustering: **Clustering Gerarchico Agglomerativo e Divisivo**, **Clustering Partizionale (K-means e K-medoids)** e **Clustering Model-based (Mixture of Gaussian)**.  
@@ -37,11 +39,13 @@ Per ciascuna configurazione, sono state valutate le performance dei metodi di cl
 Il documento è organizzato nei seguenti capitoli:
  
 1.  **Introduzione**: Presentazione del progetto, degli obiettivi e del contesto.
-2.  **Descrizione del Dataset e Analisi Esplorativa**: Esplorazione preliminare dei dati, analisi descrittiva e operazioni di preprocessing, tra cui la costruzione del dataset trasformato mediante la tecnica PCA.  
+2.  **Descrizione del Dataset e Analisi Esplorativa**: Esplorazione preliminare dei dati, analisi descrittiva e operazioni di preprocessing, tra cui la costruzione del dataset trasformato mediante la tecnica PCA.
 3.  **Applicazione delle Tecniche di Clustering**: Implementazione dei metodi di clustering (gerarchico, partizionale e model-based).
 4.  **Validazione e Visualizzazione dei Risultati**: Confronto dei risultati mediante metriche di validazione e visualizzazione dei cluster (con l'ausilio della PCA).
 5.  **Conclusioni e Sviluppi Futuri**: Sintesi dei risultati ottenuti e prospettive per ulteriori analisi.
 
+---
+\newpage
 # 2. Descrizione e analisi del dataset
 
 In questa sezione esamineremo il dataset **banknote** per comprenderne la struttura, le caratteristiche e le relazioni tra le variabili. Il dataset proviene dal pacchetto `mclust` e contiene misure che possono essere utilizzate per distinguere tra banconote autentiche e false (o per altri scopi diagnostici).
@@ -235,7 +239,7 @@ ggplot(scree_plot, aes(x = PC, y = Eigenvalue)) +
     theme_minimal()
 ```
 
-Nel grafico il gomito sembra collocarsi intorno alla quarta componente. I tre criteri danno perciò risultati differenti, per mantenere un equilibrio tra interpretabilità e preservazione della varianza, si potrebbe optare per 3 componenti.  
+Nel grafico il gomito sembra collocarsi intorno alla terza componente. Sulla base dei dati ottenuti si sceglie di mantenere un numero di componenti principali pari a 3.  
 Di seguito viene costruito il nuovo dataset in cui le variabili sono sostituite con le prime 3 PCA, che verrà usato più avanti nelle analisi.
 
 ```{r}
@@ -276,6 +280,8 @@ fviz_contrib(pca_result, choice = "var", axes = 2)
 ```
 Notiamo che la variabile `Length` ha contribuito più del 60% alla seconda componente principale.
 
+---
+\newpage
 # 3. Clustering gerarchico
 
 ## 3.1 Clustering Gerarchico Agglomerativo
@@ -567,6 +573,8 @@ final_bd <- eclust(banknote_bd_scaled, "hclust", k = 2, hc_metric = "euclidean",
 fviz_cluster(final_bd, geom = "point", ellipse.type = "norm", palette="jco", ggtheme = theme_minimal())
 ```
 
+---
+\newpage
 # 4. Clustering Partizionale
 
 In questo capitolo analizzeremo,  il clustering parziale che è una tecnica di apprendimento non supervisionato che mira a suddividere un dataset in gruppi distinti, detti cluster, senza sovrapposizioni. A differenza del clustering gerarchico, che costruisce una struttura ad albero, il clustering parziale assegna ogni punto dati a un unico cluster, ottimizzando un criterio di similarità.
@@ -796,11 +804,7 @@ fviz_nbclust(df, pam, nstart = 25, method = "gap_stat", nboot = 50)+
 Tutti metodi suggeriscono che il numero ottimale dei cluster è pari a 2. 
 
 ```{r}
-library(cluster)
-head(df, n = 3)
-
 pam.res <- pam(df, 2)
-print(pam.res)
 
 dd <- cbind(banknote, cluster = pam.res$cluster)
 head(dd, n = 8)
@@ -1112,6 +1116,8 @@ fviz_cluster(pam.res,
 # optimalScores(stab3)
 ```
 
+---
+\newpage
 # 5. Clustering Model-based: Mixture of Gaussian
 
 In questa sezione introduciamo l'applicazione del clustering basato su misture di gaussiane, utilizzando la funzione `Mclust` del pacchetto **mclust**. Questo approccio assume che i dati siano generati da una combinazione di distribuzioni gaussiane e, tramite l'algoritmo EM (Expectation-Maximization), stima i parametri di ciascuna componente. Il vantaggio principale di questo metodo è la capacità di modellare cluster con forme ellissoidali, permettendo di gestire anche cluster con sovrapposizioni. Inoltre, `Mclust` effettua una selezione automatica del numero ottimale di cluster e del modello di covarianza (parsimonioso) in base al criterio BIC, fornendo un'indicazione della bontà dell'adattamento e della complessità del modello.  
@@ -1192,6 +1198,8 @@ summary(gmm_result3)
 
 Anche in questo caso, i valori di BIC e ICL sono concordi: per un numero di cluster pari a 3 si ottiene un BIC di circa -1630 e un ICL di -1657, mentre per 2 cluster il BIC risulta attorno a -1614 e l'ICL a -1616. Questo dimostra che anche l'ICL suggerisce che il modello ottimale è quello con 2 cluster.  
 
+---
+\newpage
 
 # 6. Classificazione con gli algoritmi di cluster
 
@@ -1555,16 +1563,14 @@ Rispetto ai risultati con il dataset completo o ridotto, l'uso di solo 3 variabi
 
 In conclusione, dal punto di vista della misurazione delle performance con tecniche esterne (avendo a disposizione la vera classe delle osservazioni), l'algoritmo **GMM** è risultato il migliore nei tre diversi dataset, anche se, tutto sommato, gli altri algoritmi non hanno ottenuto dei cattivi risultati.
 
+---
+\newpage
 # 7. Conclusioni
 
-Questo progetto, realizzato a scopo didattico, ha analizzato diverse tecniche di clustering applicate al dataset *banknote*, un dataset semplice con due classi ben distinte. Inizialmente sono state utilizzate misure interne – quali il BIC, l'indice silhouette e altre metriche di compattezza – per valutare la qualità dei cluster senza ricorrere alle etichette reali. Successivamente, l'analisi è stata estesa con misure esterne (Adjusted Rand Index, accuratezza, sensibilità, specificità e AUC) per confrontare le assegnazioni dei cluster con la vera classe delle osservazioni.
+Questo progetto, realizzato a scopo didattico, ha analizzato diverse tecniche di clustering applicate al dataset *banknote*, un dataset semplice con due classi ben distinte. Inizialmente sono state utilizzate misure interne quali il BIC, l'indice silhouette e altre metriche di compattezza per valutare la qualità dei cluster senza ricorrere alle etichette reali. Successivamente, l'analisi è stata estesa con misure esterne (Adjusted Rand Index, accuratezza, sensibilità, specificità e AUC) per confrontare le assegnazioni dei cluster con la vera classe delle osservazioni.
 
 I risultati mostrano che, quando si utilizzano tutte le variabili o solo quelle discriminanti (Bottom e Diagonal), algoritmi come GMM e, in alcuni casi, K-means e K-medoids raggiungono prestazioni eccellenti, con ARI e AUC quasi perfetti. Al contrario, i metodi gerarchici, in particolare quello agglomerativo, hanno ottenuto risultati leggermente inferiori, anche se in alcune configurazioni il clustering gerarchico divisivo si è dimostrato competitivo. L'approccio GMM risulta particolarmente robusto, grazie alla possibilità di estrarre score continui tramite le probabilità a posteriori.
 
 Questi risultati, sia interni che esterni, evidenziano come una corretta selezione o trasformazione delle variabili (ad es. tramite PCA) possa semplificare il modello senza compromettere la capacità di distinguere correttamente le banconote genuine da quelle contraffatte.
 
 Per il futuro, un possibile sviluppo potrebbe essere l'applicazione di questi metodi a dataset più complessi, nonché l'ottimizzazione degli score per metodi hard. Inoltre, integrare tecniche di soft clustering o combinare il clustering con approcci supervisionati potrebbe migliorare ulteriormente la generalizzazione e la robustezza dei modelli, offrendo una visione più completa delle performance in contesti reali.
-
-
-
-
