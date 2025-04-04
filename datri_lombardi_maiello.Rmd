@@ -33,9 +33,9 @@ for (pkg in packages) {
 Il presente progetto si propone di applicare diverse tecniche di clustering al dataset **banknote** al fine di identificare gruppi omogenei presenti nei dati e confrontare l'efficacia dei vari metodi. L'analisi intende mettere in pratica le metodologie apprese nel modulo di *Data Analysis & Statistical Learning*, in particolare, verranno trattati i seguenti algoritmi di clustering: **Clustering Gerarchico Agglomerativo e Divisivo**, **Clustering Partizionale (K-means e K-medoids)** e **Clustering Model-based (Mixture of Gaussian)**.  
  
 Tali algoritmo sono stati valutati su tre diverse tipologie di dataset:
-- **Dataset Completo:** utilizzo di tutte le variabili disponibili.
-- **Dataset Ridotto:** uso esclusivo delle variabili “Bottom” e “Diagonal”, individuate come le più discriminative.
-- **Dataset Trasformato:** applicazione della PCA per ridurre le variabili a componenti che sintetizzano l'informazione.
+- **Dataset Completo:** utilizzo di tutte le variabili disponibili.  
+- **Dataset Ridotto:** uso esclusivo delle variabili “Bottom” e “Diagonal”, individuate come le più discriminative.  
+- **Dataset Trasformato:** applicazione della PCA per ridurre le variabili a componenti che sintetizzano l'informazione.  
  
 Per ciascuna configurazione, sono state valutate le performance dei metodi di clustering mediante metriche interne ed esterne.
 Il documento è organizzato nei seguenti capitoli:
@@ -1071,8 +1071,7 @@ Adesso, procederemo ad utilizzare solamente le variabili estratte tramite la tec
 
 
 ```{r}
-dati <- banknote_pca[, -1]
-dati_scaled <- scale(dati)
+dati_scaled <- banknote_pca[, -1]
 gmm_result <- Mclust(dati_scaled)
 summary(gmm_result)
 plot(gmm_result, what = "BIC")
@@ -1100,8 +1099,8 @@ Anche in questo caso, i valori di BIC e ICL sono concordi: per un numero di clus
 
 In questa sezione per le tre tipologie di dataset (completo, ridotto e trasformato), analizzeremo la qualità dei diversi metodi di clustering, fissando il numero di cluster pari al numero di classi reali, ovvero 2. Questo approccio ci permette di utilizzare tecniche di validazione esterne, dato che disponiamo delle etichette reali delle osservazioni (variabile `Status`).  
 Per valutare l'efficacia dei cluster identificati, utilizzeremo diverse metriche, tra cui:  
-- Adjusted Rand Index (ARI) che misura il grado di concordanza tra il clustering ottenuto e la classificazione reale.
-- Metriche di valutazione proprie del machine learning supervisionato, come accuratezza, specificità, recall, matrice di confusione e AUC, per interpretare il clustering come un problema di classificazione binaria.  
+- Adjusted Rand Index (ARI) che misura il grado di concordanza tra il clustering ottenuto e la classificazione reale.  
+- Metriche di valutazione proprie del machine learning supervisionato, come accuratezza, specificità, recall, matrice di   confusione e AUC, per interpretare il clustering come un problema di classificazione binaria.  
 
 ## 6.1. Dataset completo 
 
@@ -1453,7 +1452,7 @@ results_df <- data.frame(
 print(results_df)
 ```
 
-Rispetto ai risultati con il dataset completo o ridotto, l'uso di solo 3 variabili ottenute con PCA ha ridotto la performance globale, in particolare per K-medoids e Gerarchico Agglomerativo. Sebbene l'accuratezza resti elevata, l'ARI e la specificità mostrano una leggera diminuzione, il che suggerisce che la riduzione delle variabili ha compromesso la capacità di questi algoritmi di catturare la struttura dei dati. In particolare, l'algoritmo Gerarchico Agglomerativo mostra una performance molto più bassa in termini di ARI e accuratezza, indicando che l'algoritmo è più sensibile alla perdita di variabili discriminanti.  
+Rispetto ai risultati con il dataset completo o ridotto, l'uso di solo 2 variabili ottenute con PCA ha ridotto la performance globale, in particolare per K-medoids e Gerarchico Agglomerativo. Sebbene l'accuratezza resti elevata, l'ARI e la specificità mostrano una leggera diminuzione, il che suggerisce che la riduzione delle variabili ha compromesso la capacità di questi algoritmi di catturare la struttura dei dati. In particolare, l'algoritmo Gerarchico Agglomerativo mostra una performance molto più bassa in termini di ARI e accuratezza, indicando che l'algoritmo è più sensibile alla perdita di variabili discriminanti.  
 
 In conclusione, dal punto di vista della misurazione delle performance con tecniche esterne (avendo a disposizione la vera classe delle osservazioni), l'algoritmo **GMM** è risultato il migliore nei tre diversi dataset, anche se, tutto sommato, gli altri algoritmi non hanno ottenuto dei cattivi risultati.
 
