@@ -2,7 +2,13 @@
 title: "Analisi di Clustering sul Dataset Banknote"
 author: "D'Atri, Lombardi, Maiello"
 date: "`r format(Sys.Date(), '%d/%m/%Y')`"
-output: html_document
+output:
+  pdf_document:
+    toc: true
+    latex_engine: xelatex
+  html_document:
+    toc: true
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -618,8 +624,29 @@ fviz_nbclust(df, kmeans, nstart = 25, method = "gap_stat", nboot = 50)+
 
 Il primo metodo e il secondo indicano 2 come numero ottimale di cluster, il terzo ne suggerisce 3. Poiché il dataset è composto da 200 osservazioni, equamente suddivise tra banconote autentiche e contraffatte, si sceglie di impostare il numero di cluster a due e si procede con l'esecuzione dell'algoritmo.
 
+```{r}
+km.res <- eclust(df, "kmeans", k = 2, nstart = 25, graph = FALSE)
+fviz_cluster(km.res, geom = "point", ellipse.type = "norm",
+             palette = "jco", ggtheme = theme_minimal())
+```
+
 #### 4.1.1.2. Validazione
-TODO: inserire questa parte, prendere spunto dal clustering gerarchico
+
+Commento
+```{r}
+fviz_silhouette(km.res, palette = "jco",
+                ggtheme = theme_classic())
+```
+```{r}
+km_stats <- cluster.stats(distanze, km.res$cluster)
+km_stats$dunn                           
+```
+```{r}
+clust_stats <- cluster.stats(distanze, status, km.res$cluster)
+clust_stats$corrected.rand  
+clust_stats$vi
+```
+
 
 ### 4.1.2 Dataset ridotto
 
@@ -964,6 +991,28 @@ fviz_cluster(pam.res,
              repel = TRUE,
              ggtheme = theme_classic()
 )
+```
+
+### 4.3 Scelta automatica del miglior algoritmo di clustering
+```{r}
+# library(clValid)
+# 
+# clmethods <- c("hierarchical", "kmeans","pam")
+# intern <- clValid(df, 2:10, clmethods, "internal")
+# intern <- clValid(df_ridotto, nClust = 2:10, clmethods, "internal")
+# intern <- clValid(df_pca, 2:10, clmethods, "internal")
+# summary(intern)
+# 
+# stab <- clValid(df, 2:10, clmethods, "stability")
+# summary(stab)
+# 
+# stab2 <- clValid(df_ridotto, 2:10, clmethods, "stability")
+# summary(stab2)
+# optimalScores(stab2)
+# 
+# stab3 <- clValid(df_pca, 2:10, clmethods, "stability")
+# summary(stab3)
+# optimalScores(stab3)
 ```
 
 # 5. Clustering Model-based: Mixture of Gaussian
